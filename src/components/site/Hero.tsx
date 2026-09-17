@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useRotatingTypewriter } from "./Terminal";
 import { brand, heroRotation } from "@/lib/site/content";
 
@@ -13,16 +13,28 @@ export default function Hero() {
   const reduced = useReducedMotion();
   const rotating = useRotatingTypewriter(heroRotation, !reduced);
 
+  // Parallakse: sløyfa glir saktere enn teksten når du scroller, så det leser
+  // seg som dybde og ikke som et flatt bilde som forsvinner oppover.
+  const { scrollY } = useScroll();
+  const loopY = useTransform(scrollY, [0, 900], [0, reduced ? 0 : 160]);
+  const textY = useTransform(scrollY, [0, 900], [0, reduced ? 0 : -70]);
+  const textOpacity = useTransform(scrollY, [0, 520], [1, 0.15]);
+
   return (
     <section className="relative flex min-h-[100svh] items-center overflow-hidden">
       {/* Sløyfa ligger bak teksten, tonet ned mot kantene så den aldri
           konkurrerer med det som faktisk skal leses. */}
-      <InfinityScene className="pointer-events-none absolute inset-0 opacity-60 [mask-image:radial-gradient(68%_58%_at_74%_54%,#000_30%,transparent_100%)] lg:opacity-80" />
+      <motion.div style={{ y: loopY }} className="absolute inset-0">
+        <InfinityScene className="pointer-events-none absolute inset-0 opacity-60 [mask-image:radial-gradient(68%_58%_at_74%_54%,#000_30%,transparent_100%)] lg:opacity-80" />
+      </motion.div>
       {/* Teksten står på et mørkt felt, så sløyfa aldri stjeler lesbarhet. */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,rgba(5,7,10,0.97)_0%,rgba(5,7,10,0.88)_38%,rgba(5,7,10,0.35)_62%,transparent_86%)]" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(to_top,var(--color-ink-950),transparent)]" />
 
-      <div className="relative mx-auto w-full max-w-[1180px] px-5 pt-28 pb-20">
+      <motion.div
+        style={{ y: textY, opacity: textOpacity }}
+        className="relative mx-auto w-full max-w-[1180px] px-5 pt-28 pb-20"
+      >
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -99,7 +111,7 @@ export default function Hero() {
             ledig for oppdrag
           </span>
         </motion.div>
-      </div>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0 }}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import SectionHead from "./SectionHead";
 import { TerminalChrome } from "./Terminal";
+import Tilt from "./Tilt";
 import Wireframe from "./Wireframe";
 import { projects } from "@/lib/site/content";
 
@@ -31,9 +32,9 @@ export default function Work() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.5, delay: (index % 3) * 0.08, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ y: -4 }}
-              className="h-full"
+              className="group h-full"
             >
+              <Tilt className="h-full" max={5}>
               <TerminalChrome title={project.href ?? project.id} className="h-full">
                 <div className="flex flex-1 flex-col gap-4 bg-ink-850/70 p-5">
                   <Wireframe rows={project.wireframe} />
@@ -89,6 +90,7 @@ export default function Work() {
                   </div>
                 </div>
               </TerminalChrome>
+              </Tilt>
             </motion.article>
           ))}
         </div>

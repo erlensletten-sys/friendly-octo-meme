@@ -148,7 +148,7 @@ function Loop({ still }: { still: boolean }) {
     size.width < 760
       ? ([0.58, [0, -1.75, 0]] as const)
       : size.width < 1180
-        ? ([0.76, [1.25, -0.45, 0]] as const)
+        ? ([0.62, [1.65, -0.75, 0]] as const)
         : ([0.9, [2.3, -0.3, 0]] as const);
 
   return (

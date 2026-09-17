@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import SectionHead from "./SectionHead";
 import { TerminalChrome } from "./Terminal";
+import Tilt from "./Tilt";
 import { services } from "@/lib/site/content";
 
 export default function Services() {
@@ -22,8 +23,9 @@ export default function Services() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.55, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -4 }}
+            className="group h-full"
           >
+            <Tilt className="h-full">
             <TerminalChrome title={service.command} className="h-full">
               <div className="flex flex-1 flex-col gap-4 bg-ink-850/70 p-6">
                 <h3 className="text-[1.15rem] font-semibold tracking-tight">{service.title}</h3>
@@ -40,6 +42,7 @@ export default function Services() {
                 </ul>
               </div>
             </TerminalChrome>
+            </Tilt>
           </motion.div>
         ))}
       </div>
