@@ -35,6 +35,13 @@ export function PageHeader({
           {subtitle && <p className="truncate text-xs text-mist-400">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-2">{actions}</div>
+        <Link
+          href="/"
+          className="mono hidden rounded-md px-2 py-1.5 text-[11px] text-mist-400 hover:text-mist-100 lg:block"
+          title="Til hjemmesiden"
+        >
+          ← Hjemmeside
+        </Link>
       </div>
     </header>
   );

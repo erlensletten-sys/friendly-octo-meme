@@ -115,7 +115,7 @@ export default function PreviewCard({
             {formatDate(preview.createdAt)}
             {preview.kind === "bundle" && ` · ${formatBytes(preview.size)}`}
           </span>
-          <span className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          <span className="hover-reveal flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
             <Link href={`/visningsrom/preview/${preview.id}`} className={`${btnQuiet} !px-2 !py-1`}>
               Åpne
             </Link>

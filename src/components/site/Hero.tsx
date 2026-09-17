@@ -81,13 +81,13 @@ export default function Hero() {
         >
           <a
             href="#arbeid"
-            className="mono rounded-lg bg-[color:var(--color-loop-a)] px-5 py-3 text-[13px] font-semibold text-ink-950 transition-transform hover:scale-[1.03]"
+            className="mono flex min-h-12 items-center rounded-lg bg-[color:var(--color-loop-a)] px-5 text-[13px] font-semibold text-ink-950 transition-transform hover:scale-[1.03]"
           >
             Se arbeidet
           </a>
           <a
             href="#kontakt"
-            className="mono rounded-lg border border-ink-600 px-5 py-3 text-[13px] text-mist-200 transition-colors hover:border-[color:var(--color-loop-b)] hover:text-mist-100"
+            className="mono flex min-h-12 items-center rounded-lg border border-ink-600 px-5 text-[13px] text-mist-200 transition-colors hover:border-[color:var(--color-loop-b)] hover:text-mist-100"
           >
             Ta kontakt
           </a>

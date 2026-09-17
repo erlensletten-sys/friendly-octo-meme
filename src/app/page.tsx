@@ -12,7 +12,7 @@ export default function HomePage() {
     <>
       <BootIntro />
       <SiteNav />
-      <main>
+      <main id="innhold">
         <Hero />
         <Services />
         <Work />
