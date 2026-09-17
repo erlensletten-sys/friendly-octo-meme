@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 30" width="132" height="30">
+  <g transform="skewX(-12)">
+    <rect x="6" y="3" width="120" height="24" rx="3" fill="none" stroke="#e9edf2" stroke-width="2"/>
+    <text x="66" y="20" text-anchor="middle" font-family="Helvetica,Arial" font-size="13" font-weight="700" fill="#e9edf2">DEMO BYGG</text>
+  </g>
+</svg>
