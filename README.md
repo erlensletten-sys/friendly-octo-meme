@@ -122,6 +122,37 @@ også når utpakkingen feiler. Det er bevisst ikke satt opp noe
 
 Kjørbare filtyper (`.exe`, `.sh`, `.jar` …) pakkes aldri ut fra en ZIP.
 
+## CryptoPay-demoen
+
+`/cryptopay` viser fram CryptoPay Core – Bitcoin-betaling og 2-av-3-escrow –
+som et klikkbart utstillingsvindu. Sidene er produktets egne (`index`,
+`dashboard`, `checkout`, `pgp`, `glossary`), kopiert inn i `public/cryptopay/`
+med tre tilpasninger: en demo-stripe øverst, mørkt tema som standard, og at
+API-adressen peker til `/cryptopay` i stedet for en ekte server.
+
+Bak dem ligger `src/app/cryptopay/v1/[...path]/route.ts` og
+`src/lib/cryptopayDemo.ts`: et stand-in-API med samme stier og svar som det
+ekte (`/v1/prices`, `/v1/invoices`, `/v1/escrows`, `/v1/pgp/*`), men uten
+Bitcoin-node, database eller signatursjekk. Fakturaer og escrow går gjennom
+tilstandene sine på klokka – en ny on-chain-faktura er `DETECTED` etter ti
+sekunder og `CONFIRMED` etter tjuefem – så den som prøver får se hele løpet.
+Fem fakturaer og tre escrow ligger der fast som eksempler.
+
+**PGP-innloggingen er ekte.** Nøkkelen leses med `openpgp`, hemmeligheten
+krypteres til den, og svaret sammenlignes i konstant tid, akkurat som i
+produktet. En pastet privatnøkkel avvises. Det er den delen av produktet som er
+verdt å vise, så den er ikke juks.
+
+Alt annet lever i minnet. På Vercel betyr det at noe du lager kan være borte på
+neste kaldstart; eksemplene er alltid der. Dashbordet har API-nøkkel ferdig
+utfylt – trykk **Connect**. `/cryptopay` uten filnavn sendes videre til
+`index.html` (redirect, ikke rewrite, fordi sidene bruker relative stier).
+`/cryptopay/openapi.json` er produktets OpenAPI-beskrivelse, generert fra
+`cryptopay-core/src/api/openapi.ts`.
+
+Skal demoen oppdateres fra produktet: kopier `web/` på nytt og gjør de samme
+tre tilpasningene. Det er ingen byggesteg – med vilje.
+
 ## Sikkerhet
 
 Appen serverer HTML andre har laget, så det er verdt å vite hvordan det er
@@ -134,6 +165,8 @@ skjermet:
 - Eksterne adresser ligger allerede på et annet domene, og får `allow-same-origin`
   – uten den ville de fleste nettsteder brekke.
 - Stier valideres mot katalogtraversering både ved utpakking og ved servering.
+- `/cryptopay/v1/*` er åpent, men leser og skriver bare i sitt eget minne. Det
+  rører verken previews, delinger eller kommentarer.
 - Resten av appen sendes med `X-Content-Type-Options` og `Referrer-Policy` fra
   `next.config.ts`. `/serve` er bevisst utenfor den regelen og har sine egne
   headere.
@@ -210,6 +243,7 @@ src/
     visningsrom/                 galleri, enkeltvisning, sammenligning, delte lenker
     s/[token]/page.tsx           kundemodus
     serve/[id]/[[...path]]/      sandboxet servering av opplastede filer
+    cryptopay/                   stand-in-API for CryptoPay-demoen
     api/previews/                multipart-opplasting, client-token, finalize
     api/                         deling, kommentarer, innlogging
   components/site/               hjemmesiden - åpning, hero, seksjoner, bevegelse
@@ -222,7 +256,9 @@ src/
     uploadPath.ts                stiregler delt mellom nettleser og server
     zip.ts                       utpakking og valg av rot-dokument
     inject.ts                    broen som gir synkronisert scrolling
+    cryptopayDemo.ts             tilstand og regler for CryptoPay-demoen
   proxy.ts                       passordsjekken
+public/cryptopay/                CryptoPay-sidene, kopiert fra produktet
 ```
 
 Metadata lagres som én JSON-fil per objekt (`previews/<id>/meta.json`,

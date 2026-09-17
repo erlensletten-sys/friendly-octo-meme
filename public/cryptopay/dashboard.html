@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>CryptoPay — dashboard</title>
+<script>try{var t=localStorage.getItem('cpay-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-bar" role="note">
+  <span><b>Demo.</b> Nothing here is real: no bitcoin moves, the numbers are made up, and the API behind it is a stand-in. The PGP sign-in is the genuine article.</span>
+  <a href="/">← Infinity Web Creations</a>
+</div>
+<header class="site"><div class="wrap">
+  <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><path class="body" d="M5 4l6 5.6a12 12 0 0 1 10 0L27 4l-2.2 8.4A11 11 0 1 1 7.2 12.4L5 4z"/><circle class="eye" cx="12.6" cy="18" r="1.4"/><circle class="eye" cx="19.4" cy="18" r="1.4"/><path class="eye" style="stroke:var(--bg);stroke-width:1;stroke-linecap:round" d="M16 21v2"/></svg> CryptoPay</a>
+  <nav class="top"><a href="index.html">Home</a><a href="checkout.html">Checkout</a><a href="pgp.html">PGP</a><a href="glossary.html">Glossary</a><a href="/cryptopay/openapi.json">API</a><button class="theme-btn" id="themeToggle" type="button">Dark</button></nav>
+</div></header>
+
+<main class="wrap">
+  <!-- Connect -->
+  <section id="connectSec">
+    <h1>Dashboard</h1>
+    <p class="muted">Connect with your API key. It stays in this tab only (cleared on close) and is
+    used to sign requests locally in your browser — it is never sent anywhere but to your API. <b>In this demo the key is pre-filled; just press Connect.</b></p>
+    <div class="panel">
+      <div class="grid2">
+        <div><label>API base URL</label><input id="baseUrl" placeholder="https://pay.example.com" value="/cryptopay"></div>
+        <div><label>Key ID</label><input id="keyId" placeholder="mk_live_…" value="mk_demo_infinity"></div>
+      </div>
+      <label>Secret</label><input id="secret" type="password" placeholder="sk_live_…" value="sk_demo_anything_goes">
+      <div class="row" style="margin-top:14px"><button class="primary" id="connectBtn">Connect</button>
+      <span id="connErr" class="muted"></span></div>
+    </div>
+
+    <!-- PGP verify: prove control of a key, no email/password -->
+    <div class="panel" style="margin-top:18px">
+      <h3 style="margin-top:0">Or verify with a PGP key</h3>
+      <div class="notice" style="margin-bottom:12px"><b>New to PGP?</b> <a href="pgp.html">Use the guided setup →</a> <small class="muted">It makes you a key right in your browser, then walks you through the three steps. About two minutes.</small></div>
+      <p class="muted" style="margin-top:0"><small>Already have a key? Quick path: paste your <b>public</b> key, we lock a one-time secret to it, you unlock it with your own tool and paste the result. Your private key never leaves your machine — we refuse it if pasted by mistake. <a class="help" href="glossary.html#public-key">public vs private?</a></small></p>
+      <label>Your PGP public key (ASCII-armored)</label>
+      <textarea id="pgpPub" rows="5" class="mono" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----"></textarea>
+      <div class="row" style="margin-top:10px"><button class="primary" id="pgpChallengeBtn">Get challenge</button><span id="pgpErr" class="muted"></span></div>
+      <div id="pgpStep2" class="hidden" style="margin-top:14px">
+        <div class="notice">
+          <b>Decrypt this with your PGP key, then paste the result below.</b><br>
+          <small class="muted">e.g. <code>gpg -d</code>, Kleopatra, or GPG Suite — it recovers a one-time <code>CPAY-…</code> secret.</small>
+          <div id="pgpIdent" class="muted" style="margin:8px 0 6px"></div>
+          <textarea id="pgpCipher" rows="6" class="mono" readonly></textarea>
+          <div class="row" style="margin:8px 0"><button id="pgpCopy" type="button">Copy ciphertext</button></div>
+          <label>Decrypted secret</label>
+          <input id="pgpPlain" class="mono" placeholder="CPAY-…">
+          <div class="row" style="margin-top:10px"><button class="primary" id="pgpVerifyBtn">Verify</button></div>
+        </div>
+      </div>
+      <div id="pgpResult" class="hidden" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- Account -->
+  <section id="app" class="hidden">
+    <div class="row" style="justify-content:space-between">
+      <div><h2 style="margin:0">Account</h2><small id="who" class="muted"></small></div>
+      <button id="disconnect">Disconnect</button>
+    </div>
+    <div class="panel row" style="justify-content:space-between">
+      <div><div class="stat"><span id="balUsd">—</span></div><small class="muted"><span id="balSats">—</span> sats fee balance</small></div>
+      <div><span id="acctStatus" class="tag">—</span></div>
+    </div>
+
+    <!-- Payments -->
+    <h2>Bitcoin payments</h2>
+    <div class="panel">
+      <div class="grid2">
+        <div><label>Amount (USD cents)</label><input id="amt" value="1999"></div>
+        <div><label>Rail</label><select id="rail"><option value="onchain">On-chain</option><option value="lightning">Lightning</option></select></div>
+      </div>
+      <label>Order id (metadata, optional)</label><input id="orderId" placeholder="ORD-1001">
+      <div class="row" style="margin-top:12px"><button class="primary" id="createInv">Create invoice</button></div>
+      <div id="invResult" class="hidden" style="margin-top:14px"></div>
+    </div>
+    <h3>Recent invoices</h3>
+    <div id="invList" class="muted">—</div>
+
+    <!-- Escrow -->
+    <h2>Escrow</h2>
+    <details>
+      <summary>How escrow works here (plain words)</summary>
+      <p>The buyer's money goes into a Bitcoin lock that needs <b>2 of 3 keys</b> to open: the buyer's, the seller's, and ours (the <a class="help" href="glossary.html#arbiter">arbiter</a>). <b>Nobody holds the money</b> — not us, not the seller. It sits in the lock until two keys agree.</p>
+      <ul>
+        <li><b>Happy path — release:</b> seller delivered, so the seller signs and we co-sign. Money → seller. Fee 2%.</li>
+        <li><b>Refund:</b> buyer signs, we co-sign. Money → buyer. Fee 2%.</li>
+        <li><b>Safety net — timeout:</b> after the deadline the buyer can take it back <i>alone</i>, even if we vanish. Fee 1%.</li>
+        <li><b>Dispute:</b> either side flags it; we look at the case and co-sign whichever side is right. Until then, no one can touch the funds.</li>
+      </ul>
+      <p><small class="muted">Our key can only ever add a <i>second</i> signature — it can never move funds by itself. You sign in your own wallet and send us only the signature, never a key. <a href="glossary.html#non-custodial">Why "non-custodial" matters →</a></small></p>
+    </details>
+    <div class="panel">
+      <p class="muted" style="margin-top:0"><small>You'll need each party's Bitcoin <b>public key</b> (not their address) and where each should be paid. Your wallet can show a public key — it's safe to share. <a class="help" href="glossary.html#bitcoin-public-key">public key vs address?</a></small></p>
+      <div class="grid2">
+        <div><label>Payer (buyer) public key</label><input class="mono" id="payerPub" placeholder="02…"><span class="hint">66 hex characters, starts with 02 or 03. This is the buyer's key.</span></div>
+        <div><label>Payee (seller) public key</label><input class="mono" id="payeePub" placeholder="03…"><span class="hint">Same format. This is the seller's key.</span></div>
+      </div>
+      <div class="grid2">
+        <div><label>Seller's payout address</label><input class="mono" id="payeeAddr" placeholder="bc1q…"><span class="hint">Where the seller gets paid on release.</span></div>
+        <div><label>Buyer's refund address</label><input class="mono" id="payerAddr" placeholder="bc1q…"><span class="hint">Where the buyer's money returns on a refund.</span></div>
+      </div>
+      <div class="grid2">
+        <div><label>Amount (sats)</label><input id="escAmt" value="1000000"><span class="hint">1,000,000 sats = 0.01 BTC. Shown in dollars once created. <a class="help" href="glossary.html#satoshi">what's a sat?</a></span></div>
+        <div><label>Timeout (blocks)</label><input id="escTimeout" value="144"><span class="hint">After this many blocks (~144 = 1 day) the buyer can self-refund. <a class="help" href="glossary.html#timeout">why?</a></span></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="primary" id="createEsc">Create escrow</button></div>
+      <div id="escResult" class="hidden" style="margin-top:14px"></div>
+    </div>
+    <h3>Escrows</h3>
+    <div id="escList" class="muted">—</div>
+    <div id="escDetail"></div>
+  </section>
+</main>
+
+<footer class="site"><div class="wrap">Non-custodial · your key never leaves this tab · <a href="/cryptopay/openapi.json">openapi.json</a></div></footer>
+
+<script type="module">
+import { Api } from './cpay.js';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+let priceCents = 0;
+const fmtUsd = (n) => (priceCents ? (n.toFixed(2).replace(/\.?0+$/, '') + '$') : '—');
+const satsToUsd = (sats) => Number(sats) * priceCents / 1e10;
+const usdCell = (sats) => `<span class="usd">${fmtUsd(satsToUsd(sats))}</span><br><span class="sub mono">${esc(sats)} sats</span>`;
+const tagFor = (st) => {
+  const ok = ['SETTLED','CONFIRMED','RELEASED','FUNDED'], warn = ['UNDERPAID','DETECTED','AWAITING_PAYMENT','CREATED'], err = ['EXPIRED','REFUNDED'];
+  const cls = ok.includes(st) ? 'ok' : err.includes(st) ? 'err' : 'warn';
+  return `<span class="tag ${cls}">${esc(st)}</span>`;
+};
+let api = null;
+
+function saveCreds(c) { sessionStorage.setItem('cpay', JSON.stringify(c)); }
+function loadCreds() { try { return JSON.parse(sessionStorage.getItem('cpay')); } catch { return null; } }
+
+async function connect(creds) {
+  api = new Api(creds);
+  const acct = await api.account(); // throws if bad
+  try { priceCents = Number((await api.price()).priceScaled) || 0; } catch { priceCents = 0; }
+  $('who').textContent = acct.merchantId;
+  $('balUsd').textContent = fmtUsd(satsToUsd(acct.balanceSats));
+  $('balSats').textContent = Number(acct.balanceSats).toLocaleString();
+  $('acctStatus').className = 'tag ' + (acct.status === 'active' ? 'ok' : 'err');
+  $('acctStatus').textContent = acct.status;
+  $('connectSec').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  saveCreds(creds);
+  refreshInvoices(); refreshEscrows();
+}
+
+$('connectBtn').onclick = async () => {
+  $('connErr').textContent = 'connecting…';
+  try { await connect({ baseUrl: $('baseUrl').value.trim(), keyId: $('keyId').value.trim(), secret: $('secret').value }); $('connErr').textContent = ''; }
+  catch (e) { $('connErr').textContent = 'failed: ' + (e.code || e.message); }
+};
+$('disconnect').onclick = () => { sessionStorage.removeItem('cpay'); location.reload(); };
+
+// ---- PGP verify (public; proves control of a key) ----
+let pgpChallengeId = null;
+const pgpApi = () => new Api({ baseUrl: $('baseUrl').value.trim() });
+$('pgpChallengeBtn').onclick = async () => {
+  $('pgpErr').textContent = 'requesting…';
+  $('pgpResult').classList.add('hidden');
+  try {
+    const r = await pgpApi().pgpChallenge($('pgpPub').value);
+    pgpChallengeId = r.challengeId;
+    $('pgpCipher').value = r.ciphertext;
+    const uids = (r.userIds && r.userIds.length) ? esc(r.userIds.join(', ')) : '<span class="muted">no user id</span>';
+    $('pgpIdent').innerHTML = `Key <span class="mono">0x${esc(r.keyId)}</span> · ${uids}`;
+    $('pgpStep2').classList.remove('hidden');
+    $('pgpErr').textContent = '';
+  } catch (e) { $('pgpErr').textContent = 'failed: ' + (e.code || e.message); }
+};
+$('pgpCopy').onclick = () => { navigator.clipboard?.writeText($('pgpCipher').value); $('pgpCopy').textContent = 'Copied'; setTimeout(() => $('pgpCopy').textContent = 'Copy ciphertext', 1200); };
+$('pgpVerifyBtn').onclick = async () => {
+  const show = (cls, html) => { const el = $('pgpResult'); el.className = cls; el.innerHTML = html; el.classList.remove('hidden'); };
+  try {
+    const r = await pgpApi().pgpVerify(pgpChallengeId, $('pgpPlain').value);
+    if (r.verified) show('notice ok', `✅ Verified — you control key <span class="mono">${esc(r.fingerprint)}</span>.`);
+    else show('notice', 'Not verified: ' + esc(r.reason || 'mismatch'));
+  } catch (e) {
+    show('notice', e.reason ? ('Not verified: ' + esc(e.reason)) : ('Error: ' + esc(e.code || e.message)));
+  }
+};
+
+// ---- invoices ----
+$('createInv').onclick = async () => {
+  const body = { amountMinor: $('amt').value.trim(), asset: 'BTC', rail: $('rail').value };
+  const oid = $('orderId').value.trim(); if (oid) body.metadata = { orderId: oid };
+  try {
+    const inv = await api.createInvoice(body);
+    const link = api.baseUrl + '/checkout/' + inv.id;
+    $('invResult').className = 'notice ok';
+    $('invResult').innerHTML = `<b>${esc(inv.id)}</b> · ${tagFor(inv.status)}<br>
+      Pay: <span class="mono">${esc(inv.address || inv.bolt11 || '')}</span><br>
+      Amount: <b>${fmtUsd(satsToUsd(inv.amountSats))}</b> <span class="sub mono">(${esc(inv.amountSats)} sats)</span><br>
+      Checkout: <a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a>`;
+    refreshInvoices();
+  } catch (e) { $('invResult').className = 'notice err'; $('invResult').textContent = 'error: ' + (e.code || e.message); }
+  $('invResult').classList.remove('hidden');
+};
+async function refreshInvoices() {
+  try {
+    const { invoices } = await api.listInvoices(20);
+    if (!invoices.length) { $('invList').textContent = 'No invoices yet.'; return; }
+    $('invList').innerHTML = `<table><tr><th>ID</th><th>Rail</th><th>Amount</th><th>Status</th></tr>` +
+      invoices.map((i) => `<tr><td class="mono">${esc(i.id)}</td><td>${esc(i.rail)}</td><td>${usdCell(i.amountSats)}</td><td>${tagFor(i.status)}</td></tr>`).join('') + `</table>`;
+  } catch (e) { $('invList').textContent = 'error: ' + e.message; }
+}
+
+// ---- escrow ----
+$('createEsc').onclick = async () => {
+  const body = {
+    payerPub: $('payerPub').value.trim(), payeePub: $('payeePub').value.trim(),
+    amountSats: $('escAmt').value.trim(), timeoutBlocks: Number($('escTimeout').value),
+    payeePayoutAddress: $('payeeAddr').value.trim(), payerRefundAddress: $('payerAddr').value.trim(),
+  };
+  try {
+    const e = await api.createEscrow(body);
+    $('escResult').className = 'notice ok';
+    $('escResult').innerHTML = `<b>${esc(e.id)}</b> created.<br>
+      Deposit address: <span class="mono">${esc(e.address)}</span><br>
+      Amount: <b>${fmtUsd(satsToUsd(e.amountSats))}</b> <span class="sub mono">(${esc(e.amountSats)} sats)</span> · fee ${e.feeBps/100}% · timeout @ block ${e.locktime}<br>
+      <small class="muted">Witness script: <span class="mono">${esc(e.witnessScript)}</span></small>`;
+    refreshEscrows();
+  } catch (e) { $('escResult').className = 'notice err'; $('escResult').textContent = 'error: ' + (e.code || e.message); }
+  $('escResult').classList.remove('hidden');
+};
+async function refreshEscrows() {
+  try {
+    const { escrows } = await api.listEscrows();
+    if (!escrows.length) { $('escList').textContent = 'No escrows yet.'; return; }
+    $('escList').innerHTML = `<table><tr><th>ID</th><th>Amount</th><th>Status</th><th></th></tr>` +
+      escrows.map((e) => `<tr><td class="mono">${esc(e.id)}</td><td>${usdCell(e.amountSats)}</td><td>${tagFor(e.status)}${e.disputed?' <span class="tag warn">disputed</span>':''}</td><td><button data-esc="${esc(e.id)}" class="escView">Manage</button></td></tr>`).join('') + `</table>`;
+    document.querySelectorAll('.escView').forEach((b) => b.onclick = () => manageEscrow(b.getAttribute('data-esc')));
+  } catch (e) { $('escList').textContent = 'error: ' + e.message; }
+}
+async function manageEscrow(id) {
+  const d = $('escDetail');
+  d.innerHTML = 'loading…';
+  const e = await api.escrowStatus(id);
+  d.innerHTML = `<div class="panel"><h3 style="margin-top:0">${esc(id)} · ${tagFor(e.status)}</h3>
+    <p class="muted"><small>Deposit: <span class="mono">${esc(e.address)}</span> · <b>${fmtUsd(satsToUsd(e.amountSats))}</b> · funded ${fmtUsd(satsToUsd(e.fundedSats))} <span class="sub mono">(${esc(e.fundedSats)}/${esc(e.amountSats)} sats)</span> · refund @ block ${e.locktime}</small></p>
+    <div class="row">
+      <button id="eReconcile">Check funding</button>
+      <button id="eRelease" class="primary">Release (accept)</button>
+      <button id="eRefundC">Cooperative refund</button>
+      <button id="eRefundT">Timeout refund</button>
+      <button id="eDispute">Flag dispute</button>
+    </div>
+    <div id="eOut" style="margin-top:12px"></div></div>`;
+  const out = (html, cls='notice') => { const o = $('eOut'); o.className = cls; o.innerHTML = html; };
+
+  $('eReconcile').onclick = async () => { try { const r = await api.reconcileEscrow(id); out('Status: ' + tagFor(r.status)); refreshEscrows(); } catch (x) { out('error: ' + (x.code||x.message), 'notice err'); } };
+  $('eDispute').onclick = async () => { try { await api.dispute(id); out('Dispute flagged.'); refreshEscrows(); } catch (x) { out('error: ' + (x.code||x.message), 'notice err'); } };
+
+  const signFlow = async (kind) => {
+    try {
+      const prep = kind === 'release' ? await api.releaseTx(id)
+        : kind === 'refundT' ? await api.refundTx(id, 'timeout') : await api.refundTx(id, 'cooperative');
+      const who = kind === 'release' ? 'payee' : 'payer';
+      out(`<b>Sign this sighash with the ${who}'s key, then paste the signature.</b><br>
+        <small class="muted">Never enter a private key here. Produce the signature with your own tool
+        (SDK: <code>signSighash(sighash, priv)</code>).</small>
+        <label>Sighash (hex)</label><div class="copybox"><input class="mono" readonly value="${esc(prep.sighashHex)}"></div>
+        <small class="muted">Payout <b>${fmtUsd(satsToUsd(prep.payoutSats))}</b> <span class="sub mono">(${esc(prep.payoutSats)} sats)</span> · fee <b>${fmtUsd(satsToUsd(prep.feeSats))}</b> <span class="sub mono">(${esc(prep.feeSats)} sats)</span></small>
+        <label>Signature (hex, DER + sighash byte)</label><input class="mono" id="sigIn" placeholder="30…01">
+        <div class="row" style="margin-top:10px"><button class="primary" id="sigSubmit">Submit &amp; broadcast</button></div>`);
+      $('sigSubmit').onclick = async () => {
+        const sig = $('sigIn').value.trim();
+        try {
+          const r = kind === 'release' ? await api.release(id, sig)
+            : kind === 'refundT' ? await api.refund(id, sig, 'timeout') : await api.refund(id, sig, 'cooperative');
+          out('Broadcast! txid: <span class="mono">' + esc(r.txid) + '</span> · ' + tagFor(r.status), 'notice ok');
+          refreshEscrows();
+        } catch (x) { out('error: ' + (x.code||x.message), 'notice err'); }
+      };
+    } catch (x) { out('error: ' + (x.code||x.message), 'notice err'); }
+  };
+  $('eRelease').onclick = () => signFlow('release');
+  $('eRefundC').onclick = () => signFlow('refundC');
+  $('eRefundT').onclick = () => signFlow('refundT');
+}
+
+// auto-reconnect within the tab
+const saved = loadCreds();
+if (saved) connect(saved).catch(() => sessionStorage.removeItem('cpay'));
+</script>
+<script>(function(){var b=document.getElementById('themeToggle');if(!b)return;function lbl(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'Light':'Dark';}lbl();b.onclick=function(){var d=document.documentElement.getAttribute('data-theme')==='dark';var t=d?'light':'dark';document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('cpay-theme',t);}catch(e){}lbl();};})();</script>
+</body>
+</html>

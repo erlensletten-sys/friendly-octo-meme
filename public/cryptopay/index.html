@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>CryptoPay — Bitcoin payments &amp; escrow, non-custodial</title>
+<script>try{var t=localStorage.getItem('cpay-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="demo-bar" role="note">
+  <span><b>Demo.</b> Nothing here is real: no bitcoin moves, the numbers are made up, and the API behind it is a stand-in. The PGP sign-in is the genuine article.</span>
+  <a href="/">← Infinity Web Creations</a>
+</div>
+<header class="site"><div class="wrap">
+  <a class="brand" href="index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path class="body" d="M5 4l6 5.6a12 12 0 0 1 10 0L27 4l-2.2 8.4A11 11 0 1 1 7.2 12.4L5 4z"/><circle class="eye" cx="12.6" cy="18" r="1.4"/><circle class="eye" cx="19.4" cy="18" r="1.4"/><path class="eye" style="stroke:var(--bg);stroke-width:1;stroke-linecap:round" d="M16 21v2"/></svg>
+    CryptoPay
+  </a>
+  <nav class="top">
+    <a href="#payments">Payments</a>
+    <a href="#escrow">Escrow</a>
+    <a href="#pricing">Pricing</a>
+    <a href="glossary.html">Glossary</a>
+    <a href="/cryptopay/openapi.json">API</a>
+    <a class="cta" href="dashboard.html">Dashboard</a>
+    <button class="theme-btn" id="themeToggle" type="button">Dark</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <div class="hero">
+    <h1>Take Bitcoin.<br>Hold nothing.</h1>
+    <p>A non-custodial payment gateway and escrow — on the clearnet and over Tor.
+    Money goes straight to your wallet. We never touch it.</p>
+    <div class="row">
+      <a class="btn primary" href="dashboard.html">Open dashboard</a>
+      <a class="btn" href="/cryptopay/openapi.json">Read the API</a>
+    </div>
+    <p class="muted" style="margin-top:14px"><small><b>New here?</b> Two minutes to get set up: <a href="pgp.html">verify with a PGP key</a> (we'll make you one, in your browser), and every term is in the <a href="glossary.html">glossary</a>.</small></p>
+  </div>
+
+  <section id="payments">
+    <div class="cards">
+      <div class="card panel"><h3>Payments</h3>
+        <p>Give us an xpub or your Lightning node. We hand out a fresh address per
+        invoice; funds settle to you. We take 1% from a prepaid balance.</p></div>
+      <div class="card panel"><h3>Escrow</h3>
+        <p>A 2-of-3 multisig holds the deal. Any two of payer, payee, and arbiter
+        release it. The payer can always reclaim after a timeout. Holder keeps 2%.</p></div>
+    </div>
+  </section>
+
+  <section id="escrow">
+    <h2>Escrow without a middle-man meeting</h2>
+    <ol class="steps">
+      <li>Create an escrow with the payer &amp; payee keys. We derive a 2-of-3 deposit address.</li>
+      <li>The payer funds it. Nobody can move the coins alone.</li>
+      <li><b>Accept</b> → payee + arbiter release to the payee. <b>Deny</b> → payer + arbiter refund. Either way the holder keeps 2%.</li>
+      <li><b>Timeout</b> → after the deadline the payer reclaims alone (1% fee).</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Non-custodial, by construction</h2>
+    <ul class="steps" style="counter-reset:none">
+      <li style="padding-left:0">Payments settle to an address derived from <em>your</em> key. We hold no spend key.</li>
+      <li style="padding-left:0">Escrow funds sit in multisig; we hold at most the arbiter key — co-sign only, never move funds alone.</li>
+      <li style="padding-left:0">No IP logs, no customer data model, fresh address per invoice, a v3 onion service.</li>
+    </ul>
+    <p class="muted"><small>We do not mix or obscure the movement of funds — payments settle directly to merchant wallets.</small></p>
+  </section>
+
+  <section id="pricing">
+    <h2>Pricing</h2>
+    <table>
+      <tr><th>Service</th><th>Fee</th></tr>
+      <tr><td>Bitcoin payments — on-chain &amp; Lightning</td><td>1%</td></tr>
+      <tr><td>Escrow — release or arbiter-assisted refund</td><td>2%</td></tr>
+      <tr><td>Escrow — timeout self-refund</td><td>1%</td></tr>
+    </table>
+  </section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <div class="cols">
+    <div><h4>Product</h4><ul><li><a href="#payments">Payments</a></li><li><a href="#escrow">Escrow</a></li><li><a href="checkout.html">Checkout</a></li></ul></div>
+    <div><h4>Developers</h4><ul><li><a href="/cryptopay/openapi.json">API (OpenAPI)</a></li><li><a href="dashboard.html">Dashboard</a></li></ul></div>
+    <div><h4>About</h4><ul><li><a href="#pricing">Pricing</a></li><li><span class="muted" style="font-size:14px">Non-custodial</span></li></ul></div>
+  </div>
+  <div class="fine">CryptoPay · non-custodial · clearnet + onion</div>
+</div></footer>
+
+<script>(function(){var b=document.getElementById('themeToggle');if(!b)return;function lbl(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'Light':'Dark';}lbl();b.onclick=function(){var d=document.documentElement.getAttribute('data-theme')==='dark';var t=d?'light':'dark';document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('cpay-theme',t);}catch(e){}lbl();};})();</script>
+</body>
+</html>

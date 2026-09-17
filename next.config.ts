@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "25mb",
     },
   },
+  async redirects() {
+    return [
+      // CryptoPay-demoen er statiske sider i public/cryptopay med relative
+      // lenker (style.css, cpay.js). Derfor en redirect og ikke en rewrite:
+      // fra /cryptopay ville style.css blitt hentet fra rota.
+      { source: "/cryptopay", destination: "/cryptopay/index.html", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

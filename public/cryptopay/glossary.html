@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Glossary — CryptoPay</title>
+<link rel="stylesheet" href="style.css">
+<script>try{var t=localStorage.getItem('cpay-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+</head>
+<body>
+<div class="demo-bar" role="note">
+  <span><b>Demo.</b> Nothing here is real: no bitcoin moves, the numbers are made up, and the API behind it is a stand-in. The PGP sign-in is the genuine article.</span>
+  <a href="/">← Infinity Web Creations</a>
+</div>
+<header class="site"><div class="wrap">
+  <a class="brand" href="index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path class="body" d="M5 4l6 5.6a12 12 0 0 1 10 0L27 4l-2.2 8.4A11 11 0 1 1 7.2 12.4L5 4z"/><circle class="eye" cx="12.6" cy="18" r="1.4"/><circle class="eye" cx="19.4" cy="18" r="1.4"/><path class="eye" style="stroke:var(--bg);stroke-width:1;stroke-linecap:round" d="M16 21v2"/></svg>
+    CryptoPay
+  </a>
+  <nav class="top"><a href="index.html">Home</a><a href="dashboard.html">Dashboard</a><a href="pgp.html">Verify with PGP</a><button class="theme-btn" id="themeToggle" type="button">Dark</button></nav>
+</div></header>
+
+<main class="wrap">
+  <h1 style="font-size:28px;margin:22px 0 6px">Glossary</h1>
+  <p class="muted" style="max-width:640px;margin-top:0">Every term we use, in plain words. No prior knowledge assumed.</p>
+
+  <h2 style="margin-top:26px">Keys &amp; PGP</h2>
+  <dl class="gloss">
+    <dt id="key-pair">Key pair</dt>
+    <dd>Two keys made together: a <b>public</b> one you share and a <b>private</b> one you keep secret. Anything locked with the public key can only be unlocked with its private twin.</dd>
+
+    <dt id="public-key">Public key</dt>
+    <dd>The half you can give to anyone — think of it as your mailing address. People use it to lock messages <i>to</i> you and to check signatures <i>from</i> you. Sharing it is safe; that's what it's for.</dd>
+
+    <dt id="private-key">Private key (secret key)</dt>
+    <dd>The half only you hold — like your front-door key. It unlocks messages sent to you and proves it's really you. <b>Never share it, never paste it into a website.</b> Whoever has it <i>is</i> you. We never see yours, and we refuse it if you paste it by mistake.</dd>
+
+    <dt id="passphrase">Passphrase</dt>
+    <dd>A password that locks your private-key file. If someone copies the file, it's useless without the passphrase. It can't be reset or recovered — pick something you'll remember (a few random words works well).</dd>
+
+    <dt id="fingerprint">Fingerprint</dt>
+    <dd>A short, unique ID for a public key (40 hex characters). Two people comparing fingerprints can be sure they're talking about the same key. When we say "you control key <span class="mono">b884…2411</span>", that's the fingerprint.</dd>
+
+    <dt id="key-id">Key ID</dt>
+    <dd>The last 16 characters of the fingerprint, shown as <span class="mono">0x…</span>. A handy short name for a key. For anything that matters, compare the full fingerprint.</dd>
+
+    <dt id="armored">ASCII-armored ("armored")</dt>
+    <dd>A key or message written as plain text so it can be copied and pasted. It begins with a line like <span class="mono">-----BEGIN PGP PUBLIC KEY BLOCK-----</span>. Always copy the whole thing, from BEGIN to END.</dd>
+
+    <dt id="user-id">User ID</dt>
+    <dd>The name and/or email attached to a key so others know whose it is. It's optional — a nickname alone is fine.</dd>
+
+    <dt id="subkey">Subkey</dt>
+    <dd>A helper key inside your key pair with one job (e.g. only for encryption). You don't need to manage these — your tool does it. It's why a single key can both sign and receive messages.</dd>
+
+    <dt id="revocation-certificate">Revocation certificate</dt>
+    <dd>A file that lets you publicly cancel your key if you ever lose it or it's stolen. Make it when you create the key and keep it with your backups. Publishing it says "this key is no longer mine — don't use it."</dd>
+
+    <dt id="challenge">Challenge (the locked secret)</dt>
+    <dd>How we check a key is yours: we lock a one-time code (it starts with <span class="mono">CPAY-</span>) to your public key. If you can unlock it, you must hold the matching private key. The code expires in 10 minutes and works once.</dd>
+
+    <dt id="key-type">Key type (Ed25519 vs RSA-4096)</dt>
+    <dd>Two families of math behind keys. <b>Ed25519 / Curve25519</b> is modern, fast, small, and what new keys default to today — it's what we make for you. <b>RSA-4096</b> is the older standard; still fine, just bigger and slower. Both work here.</dd>
+  </dl>
+
+  <h2 style="margin-top:34px">Bitcoin &amp; escrow</h2>
+  <dl class="gloss">
+    <dt id="satoshi">Satoshi (sat)</dt>
+    <dd>The smallest unit of bitcoin: 100,000,000 sats = 1 BTC. We show amounts in dollars first, with sats underneath, so you always know what a number means.</dd>
+
+    <dt id="address">Address</dt>
+    <dd>Where bitcoin is sent — like an account number. Ours start with <span class="mono">bc1q…</span>. An address is derived from a public key, but it is <i>not</i> the same thing (see below).</dd>
+
+    <dt id="bitcoin-public-key">Bitcoin public key</dt>
+    <dd>A 33-byte code (66 hex characters, starting <span class="mono">02</span> or <span class="mono">03</span>) that your wallet uses to sign. For escrow we need this — <i>not</i> your address — so we can build a lock that only the right people can open. Your wallet can show it; it's safe to share.</dd>
+
+    <dt id="xpub">xpub / zpub</dt>
+    <dd>A "master public key" from which a wallet makes many fresh addresses. Merchants give us this so we can create a new address for every invoice without ever holding a private key. It can't spend anything.</dd>
+
+    <dt id="escrow">Escrow</dt>
+    <dd>Money held in the middle until both sides are satisfied. Here it's held by the Bitcoin network itself — in a lock that needs 2 of 3 keys — not by us.</dd>
+
+    <dt id="multisig">2-of-3 multisig</dt>
+    <dd>A lock with three keyholders where any two can open it. In an escrow: the <b>payer</b> (buyer), the <b>payee</b> (seller), and the <b>arbiter</b> (us). The buyer and seller together can settle without us; either one plus us can settle a dispute; <b>we alone can never move the money</b>.</dd>
+
+    <dt id="arbiter">Arbiter</dt>
+    <dd>The tie-breaker. If buyer and seller disagree, the arbiter co-signs with whichever side is right. The arbiter only ever adds a <i>second</i> signature — never a first.</dd>
+
+    <dt id="payer-payee">Payer / payee</dt>
+    <dd>Payer = the one sending money (buyer). Payee = the one receiving it (seller).</dd>
+
+    <dt id="deposit-address">Deposit address</dt>
+    <dd>The special address the buyer funds to start an escrow. It's built from all three public keys, so the money can only leave by the 2-of-3 rules.</dd>
+
+    <dt id="witness-script">Witness script</dt>
+    <dd>The actual rules baked into the deposit address ("2 of these 3 keys, or the payer alone after block N"). Anyone can read it and check that it says what we claim.</dd>
+
+    <dt id="sighash">Sighash</dt>
+    <dd>A short fingerprint of a specific transaction. To approve a payout you sign <i>this</i> — not your key, not the money — in your own wallet, and send us only the signature. Signing a sighash can only ever approve that exact transaction.</dd>
+
+    <dt id="signature">Signature</dt>
+    <dd>Proof, made with your private key, that you approve a specific transaction. It can't be reused for anything else. Only signatures ever travel to us — keys never do.</dd>
+
+    <dt id="timeout">Timeout (CLTV)</dt>
+    <dd>A block height after which the buyer can take the money back <i>alone</i>, even if everyone else vanishes. It's a safety net so funds can never be stuck forever. Roughly 144 blocks ≈ one day.</dd>
+
+    <dt id="release">Release</dt>
+    <dd>The happy ending: the seller delivered, so the seller signs (with the arbiter co-signing) and the money goes to the seller. Fee: 2%.</dd>
+
+    <dt id="refund">Refund</dt>
+    <dd>Money goes back to the buyer. <b>Cooperative</b>: buyer signs, arbiter co-signs (2%). <b>Timeout</b>: after the deadline the buyer signs alone, no arbiter needed (1%).</dd>
+
+    <dt id="dispute">Dispute</dt>
+    <dd>Either side can flag one. The arbiter then looks at the case and co-signs a release or a refund. Until then the money stays locked — no one can grab it.</dd>
+
+    <dt id="confirmation">Confirmation</dt>
+    <dd>A block that includes your transaction. Each new block on top is one more confirmation. More confirmations = harder to reverse. We wait for the number your merchant chose before calling a payment final.</dd>
+
+    <dt id="fee-bps">Fee / bps</dt>
+    <dd>Our cut, in basis points: 100 bps = 1%. Payments cost 1%; escrow costs 2% on release or a cooperative refund and 1% on a timeout self-refund. Miner fees (paid to the Bitcoin network) are separate and shown before you sign.</dd>
+
+    <dt id="non-custodial">Non-custodial</dt>
+    <dd>We never hold your money or your keys. Payments go straight to your wallet; escrow funds sit in a Bitcoin lock; the only key we keep is the arbiter's, which can't move anything on its own. If we disappeared tomorrow, you could still get your funds out.</dd>
+  </dl>
+
+  <p class="muted" style="margin:32px 0 40px"><small>Missing a term? The <a href="pgp.html">PGP guide</a> and <a href="dashboard.html">dashboard</a> link here for anything unfamiliar.</small></p>
+</main>
+<script>(function(){var b=document.getElementById('themeToggle');if(!b)return;function lbl(){b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'Light':'Dark';}lbl();b.onclick=function(){var d=document.documentElement.getAttribute('data-theme')==='dark';var t=d?'light':'dark';document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('cpay-theme',t);}catch(e){}lbl();};})();</script>
+</body>
+</html>

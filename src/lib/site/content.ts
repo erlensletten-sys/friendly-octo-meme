@@ -111,6 +111,17 @@ export const projects: Project[] = [
     status: "i produksjon",
   },
   {
+    id: "cryptopay",
+    name: "CryptoPay",
+    sector: "Bitcoin-betaling og escrow · eget",
+    summary:
+      "Betalingsløsning der pengene går rett til mottakerens lommebok — on-chain og Lightning, med 2-av-3-escrow og innlogging med PGP-nøkkel i stedet for passord. Demoen kjører mot et oppdiktet API.",
+    stack: ["Fastify", "Bitcoin", "Lightning", "OpenPGP"],
+    wireframe: ["nav", "hero", "split", "band", "foot"],
+    href: "/cryptopay",
+    status: "under arbeid",
+  },
+  {
     id: "gauksas",
     name: "Gauksås Gulvstøp",
     sector: "Betong og gulvstøp · Vinstra",

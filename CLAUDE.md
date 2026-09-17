@@ -160,6 +160,8 @@ Bevegelse er et lag oppå, aldri en forutsetning for å forstå sida.
 ## 8. Dette gjør vi ikke
 
 - Hardkodede farger, radier eller fontstørrelser utenfor `globals.css`-skalaen.
+  (`public/cryptopay/` er unntaket: det er produktets egne sider, kopiert inn.
+  De følger CryptoPays design, ikke dette.)
 - Nye avhengigheter for noe Tailwind, Motion eller Three.js allerede dekker.
 - `localStorage` i noe som serveres gjennom `/serve/` — previews kjører i
   sandkasse uten `allow-same-origin`, og det vil brekke.

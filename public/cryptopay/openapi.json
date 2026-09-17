@@ -1,0 +1,681 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CryptoPay API",
+    "version": "1.0.0",
+    "description": "Non-custodial BTC (on-chain + Lightning) payments, signed price oracle, and 2-of-3 Bitcoin escrow. Merchant routes are HMAC-signed (CPAY1). Public routes (prices, checkout/escrow status) need no auth and are CORS-enabled."
+  },
+  "servers": [
+    {
+      "url": "https://pay.example.com"
+    },
+    {
+      "url": "http://<onion>.onion"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cpay_hmac": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "CPAY1 keyId=<id>,ts=<unixMs>,nonce=<uuid>,sig=<hex>. Use the SDK to sign."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rail": {
+            "type": "string",
+            "enum": [
+              "onchain",
+              "lightning"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_PAYMENT",
+              "UNDERPAID",
+              "DETECTED",
+              "CONFIRMED",
+              "SETTLED",
+              "EXPIRED"
+            ]
+          },
+          "amountSats": {
+            "type": "string"
+          },
+          "paidSats": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "bolt11": {
+            "type": "string"
+          },
+          "paymentUri": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "integer"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Escrow": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "FUNDED",
+              "RELEASED",
+              "REFUNDED"
+            ]
+          },
+          "address": {
+            "type": "string"
+          },
+          "amountSats": {
+            "type": "string"
+          },
+          "fundedSats": {
+            "type": "string"
+          },
+          "locktime": {
+            "type": "integer"
+          },
+          "disputed": {
+            "type": "boolean"
+          },
+          "feeBps": {
+            "type": "integer"
+          },
+          "releaseTxid": {
+            "type": "string"
+          },
+          "refundTxid": {
+            "type": "string"
+          }
+        }
+      },
+      "SpendPreview": {
+        "type": "object",
+        "properties": {
+          "sighashHex": {
+            "type": "string"
+          },
+          "payoutSats": {
+            "type": "string"
+          },
+          "feeSats": {
+            "type": "string"
+          },
+          "txHex": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/v1/pgp/challenge": {
+      "post": {
+        "summary": "Mint a PGP challenge: encrypt a secret to a pasted public key",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "publicKey"
+                ],
+                "properties": {
+                  "publicKey": {
+                    "type": "string",
+                    "description": "ASCII-armored PGP public key"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "challengeId + armored ciphertext + key identity"
+          },
+          "400": {
+            "description": "bad or private key"
+          }
+        }
+      }
+    },
+    "/v1/pgp/verify": {
+      "post": {
+        "summary": "Verify the decrypted secret to prove key control",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "challengeId",
+                  "decrypted"
+                ],
+                "properties": {
+                  "challengeId": {
+                    "type": "string"
+                  },
+                  "decrypted": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "verified + fingerprint"
+          },
+          "400": {
+            "description": "mismatch / expired / used"
+          }
+        }
+      }
+    },
+    "/v1/oracle/pubkey": {
+      "get": {
+        "summary": "Oracle Ed25519 public key (verify price signatures)",
+        "responses": {
+          "200": {
+            "description": "hex public key"
+          }
+        }
+      }
+    },
+    "/v1/prices/{asset}": {
+      "get": {
+        "summary": "Signed median price quote",
+        "parameters": [
+          {
+            "name": "asset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BTC"
+              ]
+            }
+          },
+          {
+            "name": "fiat",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signed quote + oracle public key"
+          }
+        }
+      }
+    },
+    "/v1/invoices": {
+      "post": {
+        "summary": "Create an invoice",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "amountMinor"
+                ],
+                "properties": {
+                  "amountMinor": {
+                    "type": "string"
+                  },
+                  "fiat": {
+                    "type": "string"
+                  },
+                  "asset": {
+                    "type": "string",
+                    "enum": [
+                      "BTC"
+                    ]
+                  },
+                  "rail": {
+                    "type": "string",
+                    "enum": [
+                      "onchain",
+                      "lightning"
+                    ]
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Prepaid fee balance exhausted"
+          }
+        }
+      },
+      "get": {
+        "summary": "List invoices",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice list"
+          }
+        }
+      }
+    },
+    "/v1/invoices/{id}": {
+      "get": {
+        "summary": "Invoice status (merchant)",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/v1/checkout/{id}": {
+      "get": {
+        "summary": "Public invoice status (for custom checkouts)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public status"
+          }
+        }
+      }
+    },
+    "/v1/account": {
+      "get": {
+        "summary": "Merchant account (fee balance + status)",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account"
+          }
+        }
+      }
+    },
+    "/v1/escrows": {
+      "post": {
+        "summary": "Create a 2-of-3 escrow",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "payerPub",
+                  "payeePub",
+                  "amountSats",
+                  "payeePayoutAddress",
+                  "payerRefundAddress"
+                ],
+                "properties": {
+                  "payerPub": {
+                    "type": "string"
+                  },
+                  "payeePub": {
+                    "type": "string"
+                  },
+                  "amountSats": {
+                    "type": "string"
+                  },
+                  "timeoutBlocks": {
+                    "type": "integer"
+                  },
+                  "locktime": {
+                    "type": "integer"
+                  },
+                  "payeePayoutAddress": {
+                    "type": "string"
+                  },
+                  "payerRefundAddress": {
+                    "type": "string"
+                  },
+                  "memo": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Escrow created (address + witness script)"
+          }
+        }
+      },
+      "get": {
+        "summary": "List escrows",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Escrow list"
+          }
+        }
+      }
+    },
+    "/v1/escrows/{id}": {
+      "get": {
+        "summary": "Public escrow status",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Escrow",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Escrow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/escrows/{id}/reconcile": {
+      "post": {
+        "summary": "Detect funding (CREATED -> FUNDED)",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Escrow"
+          }
+        }
+      }
+    },
+    "/v1/escrows/{id}/release-tx": {
+      "get": {
+        "summary": "Release sighash for the payee to sign",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SpendPreview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpendPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/escrows/{id}/release": {
+      "post": {
+        "summary": "Submit payee signature; arbiter co-signs + broadcasts",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "payeeSignature"
+                ],
+                "properties": {
+                  "payeeSignature": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "txid + status"
+          }
+        }
+      }
+    },
+    "/v1/escrows/{id}/refund-tx": {
+      "get": {
+        "summary": "Refund sighash for the payer",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cooperative",
+                "timeout"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SpendPreview"
+          }
+        }
+      }
+    },
+    "/v1/escrows/{id}/refund": {
+      "post": {
+        "summary": "Submit payer signature to refund",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "payerSignature"
+                ],
+                "properties": {
+                  "payerSignature": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "cooperative",
+                      "timeout"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "txid + status"
+          }
+        }
+      }
+    },
+    "/v1/escrows/{id}/dispute": {
+      "post": {
+        "summary": "Flag a dispute",
+        "security": [
+          {
+            "cpay_hmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Escrow"
+          }
+        }
+      }
+    }
+  }
+}
