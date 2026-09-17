@@ -22,7 +22,9 @@ function LoginForm() {
     });
     setBusy(false);
     if (!response.ok) {
-      setError("Feil passord.");
+      // Serveren skiller mellom feil passord og for mange forsøk.
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      setError(data.error || "Feil passord.");
       return;
     }
     router.replace(params.get("neste") || "/visningsrom");

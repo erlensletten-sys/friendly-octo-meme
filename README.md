@@ -143,8 +143,15 @@ skjermet:
 ### Passord
 
 Passordsjekken ligger i `src/proxy.ts` og gjelder `/visningsrom` og
-admin-API-ene. Uten `ADMIN_PASSWORD` er admin-delen åpen. Det er greit lokalt,
-men sett den før du legger appen ut:
+admin-API-ene. Innlogging er bremset i `src/lib/rateLimit.ts`: hvert feilforsøk
+svarer tregere enn det forrige (0 → 2 s), etter fem feil er IP-en sperret i 30
+sekunder, og sperra dobles for hvert nye forsøk opp til en halvtime. Tellerne
+lever i minnet til instansen, så på Vercel nullstilles de ved kaldstart – det er
+en bremse mot ordboksangrep, ikke en garanti. Skal den bli hard, må tellerne
+flyttes til lageret i `src/lib/storage/`.
+
+Uten `ADMIN_PASSWORD` er admin-delen åpen. Det er greit lokalt, men sett den før
+du legger appen ut:
 
 ```bash
 ADMIN_PASSWORD=et-langt-passord npm run start
