@@ -38,6 +38,10 @@ Under `demo/` ligger to ferdige forslag du kan dra rett inn i opplastingsfeltet:
 Mappa `demo/forslag-b/` er kilden til den zipen — pakk den på nytt hvis du
 endrer noe der.
 
+`CLAUDE.md` i rota er regelsettet for videre utvikling: fargetokens, typografi,
+komponentene som skal gjenbrukes, bevegelse og tilgjengelighet. Les den før du
+skriver UI-kode her.
+
 ## Hjemmesiden
 
 | Fil | Hva den gjør |

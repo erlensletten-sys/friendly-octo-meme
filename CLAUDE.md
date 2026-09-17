@@ -1,9 +1,21 @@
-# Designsystem-regler — Infinity Web Creations
+# Infinity Web Creations — regler for arbeid i dette repoet
 
 Dette er regelsettet en agent (eller et menneske) skal lese **før** det skrives
-UI-kode i dette repoet. Det beskriver systemet slik det faktisk er i koden i dag,
-ikke slik det kunne vært. Er du i tvil om en verdi: åpne kilden i tabellen under,
-ikke gjett.
+kode her. Det beskriver systemet slik det faktisk er i koden i dag, ikke slik det
+kunne vært. Er du i tvil om en verdi: åpne kilden i tabellen under, ikke gjett.
+`README.md` forklarer hva prosjektet er og hvordan det kjøres; denne fila
+forklarer hvordan det skal bygges videre.
+
+## 0. Arbeidsflyt
+
+- `npm run typecheck` før hver commit. Det er den eneste porten som finnes —
+  ESLint er ikke satt opp ennå.
+- Commit-meldinger og kodekommentarer på norsk. Kommentarer forklarer *hvorfor*,
+  ikke *hva*.
+- Hemmeligheter (`ADMIN_PASSWORD`, blob-token) hører hjemme i `.env.local` eller
+  i miljøvariablene hos Vercel — aldri i en commit. `.env.example` viser bare
+  navnene.
+- Endrer du noe README-en beskriver, oppdater README-en i samme commit.
 
 | Sannhetskilde | Hva den eier |
 | --- | --- |
