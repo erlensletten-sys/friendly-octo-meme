@@ -178,6 +178,13 @@ select.field:focus {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* Plassholderen for åpningen. Borte for den som alt har sett den i denne
+   fanen (satt av skriptet i <head>), og for den som har bedt om mindre
+   bevegelse - da vises åpningen aldri. */
+html[data-intro="seen"] .intro-placeholder {
+  display: none;
+}
+
 /* Tastaturfokus skal synes på mørk bunn. Bare ved :focus-visible, så mus
    og berøring ikke får ringer. */
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
@@ -196,6 +203,9 @@ select.field:focus {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .intro-placeholder {
+    display: none;
   }
   .loop-text-animate,
   .caret::after {

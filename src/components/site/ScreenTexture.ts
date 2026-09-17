@@ -71,10 +71,30 @@ export class ScreenTexture {
     c.font = `500 15px ${mono}`;
     c.fillText(`${brand.shell}@web: ~`, x + 84, y + 26);
 
+    const blink = Math.floor(time * 2) % 2 === 0;
+
+    // Siste fase: skjermen er ryddet, og navnet står alene midt i vinduet.
+    // Det er dette kameraet stuper inn i, så det må tåle å fylle hele bildet.
+    if (lines > bootLines.length) {
+      c.font = `600 38px ${mono}`;
+      const nameW = c.measureText(brand.name).width;
+      const nx = x + (w - nameW) / 2;
+      const ny = y + 40 + (h - 40) / 2 + 14;
+      c.fillStyle = "#8b5cf6";
+      c.fillText(">", nx - 40, ny);
+      c.fillStyle = "#e8ebf0";
+      c.fillText(brand.name, nx, ny);
+      if (blink) {
+        c.fillStyle = "#3ef0dc";
+        c.fillRect(nx + nameW + 10, ny - 31, 18, 38);
+      }
+      this.finish(c);
+      return;
+    }
+
     // Innhold.
     const lineH = 30;
     let cy = y + 84;
-    const blink = Math.floor(time * 2) % 2 === 0;
     c.font = `500 19px ${mono}`;
 
     c.fillStyle = "#3ef0dc";
@@ -114,10 +134,13 @@ export class ScreenTexture {
       }
     }
 
-    // Skannelinjer, som på et ekte rør.
+    this.finish(c);
+  }
+
+  /** Skannelinjer som på et ekte rør, og beskjed til three om at bildet er nytt. */
+  private finish(c: CanvasRenderingContext2D) {
     c.fillStyle = "rgba(255,255,255,0.035)";
     for (let sy = 0; sy < SCREEN_H; sy += 4) c.fillRect(0, sy, SCREEN_W, 1);
-
     this.texture.needsUpdate = true;
   }
 

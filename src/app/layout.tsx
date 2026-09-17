@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { brand } from "@/lib/site/content";
+import { introBootScript } from "@/lib/site/intro";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,7 +37,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="nb" className={`${inter.variable} ${mono.variable}`}>
+    // suppressHydrationWarning: skriptet under setter data-intro på <html>
+    // før React er i gang, og det er meningen.
+    <html lang="nb" className={`${inter.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Skjuler plassholderen for åpningen hos den som alt har sett den,
+            før første bilde tegnes. Kjører før alt annet. */}
+        <script dangerouslySetInnerHTML={{ __html: introBootScript }} />
+      </head>
       <body className="grain min-h-screen antialiased">{children}</body>
     </html>
   );

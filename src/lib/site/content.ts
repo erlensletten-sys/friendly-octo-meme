@@ -15,15 +15,6 @@ export const brand = {
   orgNumber: "",
 };
 
-/** Linjene som ruller over skjermen i oppstartssekvensen. */
-export const bootLines = [
-  { label: "kjerne", value: "next.js 16 · react 19 · typescript" },
-  { label: "grensesnitt", value: "tailwind 4 · motion · three.js" },
-  { label: "tjenester", value: "4 moduler lastet" },
-  { label: "referanser", value: "6 prosjekter indeksert" },
-  { label: "visningsrom", value: "tilkoblet" },
-];
-
 export const heroRotation = [
   "nettsider som laster på under ett sekund",
   "CMS eieren faktisk klarer å bruke",
@@ -201,4 +192,16 @@ export const nav = [
   { href: "#arbeid", label: "Arbeid" },
   { href: "#prosess", label: "Prosess" },
   { href: "#kontakt", label: "Kontakt" },
+];
+
+/**
+ * Linjene som ruller over skjermen i åpningen. Tallene hentes fra listene
+ * over, så de stemmer også etter at et prosjekt er lagt til.
+ */
+export const bootLines = [
+  { label: "kjerne", value: "next.js 16 · react 19 · typescript" },
+  { label: "grensesnitt", value: "tailwind 4 · motion · three.js" },
+  { label: "tjenester", value: `${services.length} moduler lastet` },
+  { label: "referanser", value: `${projects.length} prosjekter indeksert` },
+  { label: "visningsrom", value: "tilkoblet" },
 ];

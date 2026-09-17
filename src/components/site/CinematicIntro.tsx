@@ -6,9 +6,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { bootLines } from "@/lib/site/content";
+import { INTRO_SESSION_KEY } from "@/lib/site/intro";
 import { BOOT_COMMAND_LENGTH, ScreenTexture } from "./ScreenTexture";
 
-const SESSION_KEY = "iwc:intro";
 const DURATION = 6.4; // sekunder fra første bilde til sida er framme
 
 /* ------------------------------------------------------------------ scenen */
@@ -16,14 +16,19 @@ const DURATION = 6.4; // sekunder fra første bilde til sida er framme
 const SCREEN_CENTER = new THREE.Vector3(0, 1.3, -0.3);
 const FIGURE_CENTER = new THREE.Vector3(0, 1.12, 0.35);
 
-/** Kamerabanen: bak og over høyre skulder, inn mot skjermen, og gjennom den. */
+/**
+ * Kamerabanen: bak og over høyre skulder, forbi hetta på høyre side, og så inn
+ * foran ansiktet mot skjermen. Hetta står i (0, 1.42, 0.53) med radius ~0.2,
+ * så banen må holde seg utenfor den - ellers fyller den bildet i det kameraet
+ * skal stupe inn i navnet.
+ */
 const PATH = new THREE.CatmullRomCurve3(
   [
     new THREE.Vector3(1.75, 2.1, 3.7),
     new THREE.Vector3(0.95, 1.78, 2.25),
-    new THREE.Vector3(0.46, 1.5, 1.15),
-    new THREE.Vector3(0.14, 1.32, 0.9),
-    new THREE.Vector3(0, 1.3, 0.42),
+    new THREE.Vector3(0.5, 1.5, 1.15),
+    new THREE.Vector3(0.4, 1.34, 0.6),
+    new THREE.Vector3(0.08, 1.3, 0.3),
   ],
   false,
   "catmullrom",
@@ -39,12 +44,26 @@ function easeCamera(t: number) {
   return 0.12 * t + 0.88 * Math.pow(t, 2.6);
 }
 
-function Rig({ progress }: { progress: React.MutableRefObject<number> }) {
+function Rig({
+  progress,
+  start,
+  onFirstFrame,
+}: {
+  progress: React.MutableRefObject<number>;
+  start: React.MutableRefObject<number | null>;
+  onFirstFrame: () => void;
+}) {
   const { camera } = useThree();
   const target = useMemo(() => new THREE.Vector3(), []);
   const pos = useMemo(() => new THREE.Vector3(), []);
 
   useFrame(() => {
+    // Klokka starter først når scenen faktisk tegner. Da spiser ikke
+    // shader-kompilering og lasting av de første sekundene.
+    if (start.current === null) {
+      start.current = performance.now();
+      onFirstFrame();
+    }
     const t = THREE.MathUtils.clamp(easeCamera(progress.current), 0, 1);
     PATH.getPointAt(t, pos);
     camera.position.copy(pos);
@@ -52,7 +71,7 @@ function Rig({ progress }: { progress: React.MutableRefObject<number> }) {
     target.lerpVectors(FIGURE_CENTER, SCREEN_CENTER, THREE.MathUtils.smoothstep(t, 0.15, 0.7));
     camera.lookAt(target);
     if (camera instanceof THREE.PerspectiveCamera) {
-      camera.fov = THREE.MathUtils.lerp(46, 30, THREE.MathUtils.smoothstep(t, 0.4, 1));
+      camera.fov = THREE.MathUtils.lerp(46, 36, THREE.MathUtils.smoothstep(t, 0.4, 1));
       camera.updateProjectionMatrix();
     }
   });
@@ -163,20 +182,22 @@ function Room({ screen }: { screen: ScreenTexture }) {
         <boxGeometry args={[1.32, 0.76, 0.035]} />
         <meshStandardMaterial color="#0e121a" roughness={0.45} metalness={0.3} />
       </mesh>
+      {/* fog={false}: skjermen er lyskilden i rommet og skal være lesbar fra
+          første bilde, også når kameraet står langt unna. */}
       <mesh position={SCREEN_CENTER}>
         <planeGeometry args={[1.2, 0.675]} />
-        <meshBasicMaterial map={screen.texture} toneMapped={false} />
+        <meshBasicMaterial map={screen.texture} toneMapped={false} fog={false} />
       </mesh>
       {/* Glød fra skjermen. Bloom tar det herfra. */}
       <mesh position={[0, 1.3, -0.301]}>
         <planeGeometry args={[1.2, 0.675]} />
-        <meshBasicMaterial color="#3ef0dc" transparent opacity={0.08} toneMapped={false} />
+        <meshBasicMaterial color="#3ef0dc" transparent opacity={0.08} toneMapped={false} fog={false} />
       </mesh>
 
       <pointLight position={[0, 1.32, 0.05]} color="#7ff0e4" intensity={7} distance={4.5} decay={2} castShadow />
       <pointLight position={[-1.8, 1.7, 1.2]} color="#8b5cf6" intensity={1.4} distance={6} decay={2} />
       <ambientLight intensity={0.08} />
-      <fog attach="fog" args={["#05070a", 3.5, 9]} />
+      <fog attach="fog" args={["#05070a", 5.5, 12]} />
     </group>
   );
 }
@@ -207,22 +228,28 @@ function Dust() {
 
 function Scene({
   progress,
+  start,
   screen,
+  onFirstFrame,
 }: {
   progress: React.MutableRefObject<number>;
+  start: React.MutableRefObject<number | null>;
   screen: ScreenTexture;
+  onFirstFrame: () => void;
 }) {
   // Terminalen skriver seg mens kameraet kjører inn.
   useFrame((state) => {
     const elapsed = progress.current * DURATION;
     const typed = Math.min(BOOT_COMMAND_LENGTH, Math.floor(Math.max(0, elapsed - 0.5) / 0.045));
-    const lines = Math.min(bootLines.length, Math.floor(Math.max(0, elapsed - 1.9) / 0.28));
+    // Én linje mer enn det finnes, og skjermen ryddes for navnet alene -
+    // det er det kameraet stuper inn i.
+    const lines = Math.min(bootLines.length + 1, Math.floor(Math.max(0, elapsed - 1.9) / 0.28));
     screen.draw(typed, lines, state.clock.elapsedTime);
   });
 
   return (
     <>
-      <Rig progress={progress} />
+      <Rig progress={progress} start={start} onFirstFrame={onFirstFrame} />
       <Room screen={screen} />
       <Figure />
       <Dust />
@@ -254,6 +281,8 @@ export default function CinematicIntro() {
   const reduced = useReducedMotion();
   const [state, setState] = useState<"ukjent" | "kjører" | "ferdig">("ukjent");
   const [fading, setFading] = useState(false);
+  const [drawn, setDrawn] = useState(false);
+  const onFirstFrame = useCallback(() => setDrawn(true), []);
   const progress = useRef(0);
   const start = useRef<number | null>(null);
   const screen = useMemo(() => (typeof document !== "undefined" ? new ScreenTexture() : null), []);
@@ -261,7 +290,7 @@ export default function CinematicIntro() {
   useEffect(() => {
     let seen = false;
     try {
-      seen = sessionStorage.getItem(SESSION_KEY) === "1";
+      seen = sessionStorage.getItem(INTRO_SESSION_KEY) === "1";
     } catch {
       /* privat modus */
     }
@@ -271,7 +300,7 @@ export default function CinematicIntro() {
   const finish = useCallback(() => {
     setFading(true);
     try {
-      sessionStorage.setItem(SESSION_KEY, "1");
+      sessionStorage.setItem(INTRO_SESSION_KEY, "1");
     } catch {
       /* ignorert */
     }
@@ -283,7 +312,10 @@ export default function CinematicIntro() {
     if (state !== "kjører") return;
     let raf = 0;
     const tick = (now: number) => {
-      if (start.current === null) start.current = now;
+      if (start.current === null) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const t = (now - start.current) / 1000 / DURATION;
       progress.current = Math.min(1, t);
       if (t >= 0.9 && !fading) finish();
@@ -323,12 +355,25 @@ export default function CinematicIntro() {
           <Canvas
             camera={{ position: [1.75, 2.1, 3.7], fov: 46, near: 0.05, far: 30 }}
             dpr={[1, 1.5]}
-            shadows
+            shadows="percentage"
             gl={{ antialias: false, powerPreference: "high-performance" }}
           >
             <color attach="background" args={["#05070a"]} />
-            <Scene progress={progress} screen={screen} />
+            <Scene progress={progress} start={start} screen={screen} onFirstFrame={onFirstFrame} />
           </Canvas>
+
+          {/* Samme markør som plassholderen viste, til scenen har tegnet sitt
+              første bilde. Shader-kompilering kan ta et sekund på svak maskin,
+              og da skal det ikke være svart. */}
+          <motion.p
+            initial={{ opacity: 1 }}
+            animate={{ opacity: drawn ? 0 : 1 }}
+            transition={{ duration: 0.35 }}
+            className="mono pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[13px] text-mist-300"
+          >
+            <span className="text-[color:var(--color-loop-a)]">$ </span>
+            <span className="caret" />
+          </motion.p>
 
           {/* Hvit blits i det kameraet går gjennom skjermen. */}
           <motion.div
