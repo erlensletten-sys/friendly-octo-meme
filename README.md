@@ -3,12 +3,13 @@
 Hjemmesiden til gesjeften, og verktøyet som hører til. Ett Next.js-prosjekt med
 to halvdeler:
 
-- **Hjemmesiden** (`/`) — offentlig. Animert oppstartssekvens, en 3D-sløyfe som
+- **Hjemmesiden** (`/`) — offentlig. En kinematisk åpning i 3D, en sløyfe som
   aldri tar slutt, og seksjoner for tjenester, arbeid, prosess og kontakt.
 - **Visningsrom** (`/visningsrom`) — bak passord. Der nettsideforslag legges,
   sammenlignes side ved side og deles med kunden gjennom en hemmelig lenke.
 
-Bygget med Next.js 16, React 19.2, Tailwind 4, Three.js og Motion.
+Bygget med Next.js 16 (App Router), React 19.2, Tailwind 4, TypeScript 5.9,
+Three.js via React Three Fiber (med drei og postprocessing), Motion 13 og Lenis.
 
 ---
 
@@ -19,46 +20,72 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-Prosjektet kjører uten konfigurasjon. Opplastinger havner i `.data/` i
-prosjektmappa. Du kan slette hele `.data/` når du vil starte på nytt.
+Node 20.9 eller nyere. Prosjektet kjører uten konfigurasjon; opplastinger havner
+i `.data/` i prosjektmappa, og du kan slette hele `.data/` når du vil starte på
+nytt.
+
+| Kommando | Hva den gjør |
+| --- | --- |
+| `npm run dev` | Utviklingsserver. |
+| `npm run build` · `npm run start` | Produksjonsbygg og kjøring av det. |
+| `npm run typecheck` | `tsc --noEmit`. Kjør denne før du pusher. |
+
+`npm run lint` står i `package.json`, men det ligger ingen ESLint-konfigurasjon i
+prosjektet ennå — typesjekken er porten som faktisk gjelder.
 
 Under `demo/` ligger to ferdige forslag du kan dra rett inn i opplastingsfeltet:
 `forslag-a.html` (én fil) og `forslag-b.zip` (mappe med CSS og SVG-logo).
+Mappa `demo/forslag-b/` er kilden til den zipen — pakk den på nytt hvis du
+endrer noe der.
 
 ## Hjemmesiden
 
 | Fil | Hva den gjør |
 | --- | --- |
-| `src/lib/site/content.ts` | **All tekst på siden.** Navn, tjenester, prosjekter, prosess og kontaktopplysninger. Endre her, ikke i komponentene. |
-| `src/components/site/BootIntro.tsx` | Oppstartssekvensen. Kjører én gang per fane, hoppes over med et klikk, og vises ikke i det hele tatt ved «reduser bevegelse». |
-| `src/components/site/InfinityScene.tsx` | 3D-sløyfa. Et rør langs en lemniskat med to lyspulser som løper hver sin vei og aldri når slutten. Slutter å tegne når den er utenfor skjermen, faller tilbake til SVG uten WebGL. |
-| `src/components/site/Hero.tsx` | Førsteinntrykket: prompt, overskrift, roterende skrivemaskin-linje. |
-| `src/components/site/Services.tsx` · `Work.tsx` · `Process.tsx` · `Contact.tsx` | Seksjonene. |
-| `src/components/site/Wireframe.tsx` | Skissene i arbeid-seksjonen — strukturen på hver side, tegnet i stedet for et skjermbilde. |
+| `src/lib/site/content.ts` | **All tekst på siden.** Navn, kontaktopplysninger, tjenester, prosjekter, prosess, meny og linjene i åpningssekvensen. Endre her, ikke i komponentene. |
+| `src/app/globals.css` | Fargeskalaene (`ink-*`, `mist-*`) og de to endene av sløyfa (`--color-loop-a`, `--color-loop-b`). Alt som lyser bruker disse to. |
+| `src/components/site/IntroGate.tsx` | Laster åpningen bare i nettleseren, slik at three.js og bloom aldri havner i hoved-bunten eller i server-renderingen. |
+| `src/components/site/CinematicIntro.tsx` | **Åpningen.** Et mørkt rom, en skikkelse med hetta mot oss, og en skjerm som lyser opp ryggen hans. Kameraet kjører over skulderen og inn i skjermen på 6,4 sekunder. Kjører én gang per fane (`sessionStorage`-nøkkel `iwc:intro`), hoppes over med tast, klikk eller scroll, og vises ikke i det hele tatt ved «reduser bevegelse» eller uten WebGL. |
+| `src/components/site/ScreenTexture.ts` | Terminalen inne i åpningen. Tegnes på et 2D-lerret og legges som tekstur på skjermflaten, så den ligger i selve 3D-scenen — hetta kan skygge for den, og bloom får den til å lyse. |
+| `src/components/site/InfinityScene.tsx` | 3D-sløyfa i heroen. Et rør langs en lemniskat med to lyspulser som løper hver sin vei og aldri når slutten. Vipper mot musepekeren, slutter å tegne når den er utenfor skjermen, og faller tilbake til en SVG-sløyfe uten WebGL. |
+| `src/components/site/Hero.tsx` | Førsteinntrykket: prompt, overskrift, roterende skrivemaskin-linje, og parallakse mellom sløyfa og teksten. |
+| `src/components/site/Services.tsx` · `Work.tsx` · `Process.tsx` · `Contact.tsx` | Seksjonene. `Process` tegner tidslinja i takt med scrollen; `Contact` er skjemaet. |
+| `src/components/site/SiteNav.tsx` · `SiteFooter.tsx` | Toppmeny med mobilmeny og hopp-lenke, og bunnlinja. |
+| `src/components/site/Wireframe.tsx` | Skissene i arbeid-seksjonen — strukturen på hver side, tegnet i stedet for et skjermbilde. Radene settes per prosjekt i `content.ts`. |
+| `src/components/site/Terminal.tsx` · `StreamText.tsx` | Tekst som skrives ut: skrivemaskin-hooks og terminalramma rundt kortene, og tekst som strømmer inn ord for ord. |
+| `src/components/site/Tilt.tsx` · `Cursor.tsx` · `SmoothScroll.tsx` | Bevegelseslaget: kort som vipper i 3D mot musa, ringen som følger pekeren, og myk scrolling med Lenis. |
+| `src/components/site/SectionHead.tsx` | Kommandolinje, overskrift og ingress øverst i hver seksjon. |
+
+**Bevegelse er et lag, ikke en forutsetning.** Alt over sjekker
+`prefers-reduced-motion`: åpningen hoppes over, Lenis skrus av, ringen rundt
+pekeren vises ikke, kortene slutter å vippe og sløyfa står stille. Vipp og ring
+krever dessuten fin peker, så på berøring er kortene vanlige kort. Uten WebGL
+byttes begge 3D-scenene ut med flate alternativ.
 
 **Før lansering:** fyll inn `phone` og `orgNumber` i `src/lib/site/content.ts`,
 og bytt `email` hvis henvendelser skal et annet sted. Feltene er merket TODO.
+Telefon vises bare i kontaktseksjonen når den er satt, og org.nr bare i bunnlinja.
 
 Kontaktskjemaet setter sammen en e-post og åpner den i besøkendes eget
 e-postprogram. Ingen skjematjeneste, ingen database, ingen sporingscookies.
 
 ## Visningsrom
 
-## De fire visningene
+### De fem visningene
 
 | Rute | Hva den gjør |
 | --- | --- |
 | `/visningsrom` | Galleriet. Opplasting, levende miniatyrer, søk, og valg av flere previews. |
 | `/visningsrom/preview/<id>` | Én preview i full bredde, med enhetsvelger og detaljer. |
 | `/visningsrom/compare?ids=a,b` | To til fire paneler side ved side, felles enhetsbredde og synkronisert scrolling. |
-| `/s/<token>` | Kundemodus. Ingen opplasting eller sletting – bare forslagene og et kommentarfelt. Åpen uten passord. |
 | `/visningsrom/shares` | Oversikt over delte lenker, med mulighet til å trekke dem tilbake. |
+| `/s/<token>` | Kundemodus. Ingen opplasting eller sletting – bare forslagene og et kommentarfelt. Åpen uten passord. |
 
 Marker previews i galleriet med avkryssingsboksen øverst til venstre på kortet,
 og velg **Sammenlign side ved side** eller **Del med kunde** i linja som kommer
 opp nederst.
 
-## To veier inn for filer
+### To veier inn for filer
 
 Appen velger opplastingsmetode selv, ut fra hvilken lagring som er aktiv:
 
@@ -73,12 +100,13 @@ Appen velger opplastingsmetode selv, ut fra hvilken lagring som er aktiv:
   er det eneste taket. Framdriften vises per fil i opplastingsfeltet.
 
 Token-ruta ligger bak passordet, og signerer bare stier på formen
-`uploads/<tilfeldig>/<filnavn>.(html|htm|zip)`. `finalize` godtar bare de samme
+`uploads/<tilfeldig>/<filnavn>.(html|htm|zip)` (`src/lib/uploadPath.ts` er
+regelen, delt mellom nettleser og server). `finalize` godtar bare de samme
 stiene, leser fila, pakker den ut og sletter den midlertidige mappa etterpå –
 også når utpakkingen feiler. Det er bevisst ikke satt opp noe
 `onUploadCompleted`-kall, så ruta nås aldri utenfra.
 
-## Hva som kan lastes opp
+### Hva som kan lastes opp
 
 - **`.html`** – én enkelt fil. Alt må ligge i fila (inline CSS/JS, eller
   ressurser hentet fra et CDN).
@@ -102,20 +130,24 @@ skjermet:
 - Eksterne adresser ligger allerede på et annet domene, og får `allow-same-origin`
   – uten den ville de fleste nettsteder brekke.
 - Stier valideres mot katalogtraversering både ved utpakking og ved servering.
+- Resten av appen sendes med `X-Content-Type-Options` og `Referrer-Policy` fra
+  `next.config.ts`. `/serve` er bevisst utenfor den regelen og har sine egne
+  headere.
 - Sett `PREVIEW_STRICT_SANDBOX=false` hvis en mal trenger `localStorage` for å
   vises riktig. Da mister du beskyttelsen over.
 
 ### Passord
 
-Uten `ADMIN_PASSWORD` er admin-delen åpen. Det er greit lokalt, men sett den før
-du legger appen ut:
+Passordsjekken ligger i `src/proxy.ts` og gjelder `/visningsrom` og
+admin-API-ene. Uten `ADMIN_PASSWORD` er admin-delen åpen. Det er greit lokalt,
+men sett den før du legger appen ut:
 
 ```bash
 ADMIN_PASSWORD=et-langt-passord npm run start
 ```
 
 Hjemmesiden er alltid offentlig, og kundelenkene (`/s/<token>`) er alltid åpne uten passord – tokenet er hemmeligheten.
-Trekk en lenke tilbake fra `/shares` når forslaget er avgjort.
+Trekk en lenke tilbake fra `/visningsrom/shares` når forslaget er avgjort.
 
 ## Miljøvariabler
 
@@ -162,12 +194,14 @@ som et volum i Docker.
 src/
   app/
     page.tsx                     hjemmesiden
+    layout.tsx · globals.css     fonter, metadata og fargeskalaene
+    login/                       innlogging til admin-delen
     visningsrom/                 galleri, enkeltvisning, sammenligning, delte lenker
     s/[token]/page.tsx           kundemodus
     serve/[id]/[[...path]]/      sandboxet servering av opplastede filer
     api/previews/                multipart-opplasting, client-token, finalize
     api/                         deling, kommentarer, innlogging
-  components/site/               hjemmesiden
+  components/site/               hjemmesiden - åpning, hero, seksjoner, bevegelse
   components/                    Visningsrom
   lib/
     site/content.ts              all tekst på hjemmesiden
