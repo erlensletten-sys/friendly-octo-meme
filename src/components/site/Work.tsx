@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import SectionHead from "./SectionHead";
 import { TerminalChrome } from "./Terminal";
 import Tilt from "./Tilt";
+import SitePreview from "./SitePreview";
 import Wireframe from "./Wireframe";
 import type { ProjectStatus } from "@/lib/site/content";
 import { useSite } from "./SiteContext";
@@ -35,7 +36,23 @@ export default function Work() {
               <Tilt className="h-full" max={5}>
               <TerminalChrome title={project.href ?? project.id} className="h-full">
                 <div className="flex flex-1 flex-col gap-4 bg-ink-850/70 p-5">
-                  <Wireframe rows={project.wireframe} />
+                  {project.preview?.framable ? (
+                    project.href ? (
+                      <a
+                        href={project.href}
+                        target={project.href.startsWith("/") ? undefined : "_blank"}
+                        rel={project.href.startsWith("/") ? undefined : "noreferrer"}
+                        aria-label={`${t.ui.open} ${project.name}`}
+                        className="block rounded-lg transition-transform hover:scale-[1.015]"
+                      >
+                        <SitePreview src={project.preview.src} title={project.name} />
+                      </a>
+                    ) : (
+                      <SitePreview src={project.preview.src} title={project.name} />
+                    )
+                  ) : (
+                    <Wireframe rows={project.wireframe} />
+                  )}
 
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">

@@ -37,9 +37,15 @@ export type Project = {
   sector: string;
   summary: string;
   stack: string[];
-  /** Grov skisse av sidens layout, tegnet som wireframe i kortet. */
+  /** Grov skisse av sidens layout. Brukes når sida ikke kan vises i ramme. */
   wireframe: ("nav" | "hero" | "split" | "grid" | "band" | "foot")[];
   href?: string;
+  /**
+   * Sida selv, vist i en nedskalert iframe i kortet. `framable: false` når
+   * sida sender X-Frame-Options/frame-ancestors som nekter oss - da vises
+   * skissen i stedet, til headeren er endret.
+   */
+  preview?: { src: string; framable: boolean };
   status: ProjectStatus;
 };
 

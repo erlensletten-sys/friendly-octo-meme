@@ -99,13 +99,6 @@ const agents: Content["agents"]["items"] = [
 
 const work = projects([
   {
-    id: "sletten",
-    name: "Sletten Gulvstøp",
-    sector: "Concrete floors · Vinstra",
-    summary:
-      "A front page that speaks just as clearly to homeowners and contractors, with complete packages instead of a price list. The owner edits the content himself.",
-  },
-  {
     id: "stenumgaard",
     name: "Stenumgaard Design",
     sector: "3D printing",
@@ -125,27 +118,6 @@ const work = projects([
     sector: "Bitcoin payments and escrow · in-house",
     summary:
       "A payment gateway where the money goes straight to the recipient's wallet — on-chain and Lightning, with 2-of-3 escrow and PGP-key sign-in instead of passwords. The demo runs against a stand-in API.",
-  },
-  {
-    id: "gauksas",
-    name: "Gauksås Gulvstøp",
-    sector: "Concrete floors · Vinstra",
-    summary:
-      "A darker variant of the same design system, built around the partnership with AS Betongpumping.",
-  },
-  {
-    id: "bw",
-    name: "BW Betonggulv",
-    sector: "Concrete floors · Vågå",
-    summary:
-      "The same design system set up again for a neighbouring firm — proof that the foundation holds up to being reused.",
-  },
-  {
-    id: "bondestad",
-    name: "Bondestad Eiendomsservice",
-    sector: "Groundwork and floor build-up · Vinstra",
-    summary:
-      "A wider range of services than the others, so the menu and service pages had to be rebuilt to carry several tracks.",
   },
 ]);
 
@@ -229,7 +201,7 @@ export const en: Content = {
   work: {
     command: "git log --oneline work/",
     title: "What I have built",
-    lead: "Mostly construction firms in Gudbrandsdalen, plus the tools I build to do that job better. The sketches show how each site is put together.",
+    lead: "Three things you can look at right here. The frames below are the sites themselves, not screenshots – open them in a new tab to try them.",
     status: { live: "in production", wip: "in progress", delivered: "delivered" },
     items: work,
   },

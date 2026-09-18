@@ -59,7 +59,8 @@ skriver UI-kode her.
 | `src/components/site/Hero.tsx` | Førsteinntrykket: prompt, overskrift, roterende skrivemaskin-linje, og parallakse mellom sløyfa og teksten. |
 | `src/components/site/Services.tsx` · `Work.tsx` · `Process.tsx` · `Contact.tsx` | Seksjonene. `Process` tegner tidslinja i takt med scrollen; `Contact` er skjemaet. |
 | `src/components/site/SiteNav.tsx` · `SiteFooter.tsx` | Toppmeny med mobilmeny og hopp-lenke, og bunnlinja. |
-| `src/components/site/Wireframe.tsx` | Skissene i arbeid-seksjonen — strukturen på hver side, tegnet i stedet for et skjermbilde. Radene settes per prosjekt i `content/shared.ts`. |
+| `src/components/site/SitePreview.tsx` | Sidene selv i arbeid-kortene: en iframe tegnet i 1280 px bredde og skalert ned til kortet, lastet først når kortet nærmer seg skjermen, med et lag oppå som hindrer at ramma stjeler scroll og klikk. `preview.src` per prosjekt i `content/shared.ts`. |
+| `src/components/site/Wireframe.tsx` | Skissen som vises i stedet når sida ikke kan settes i ramme (`preview.framable: false`). Radene settes per prosjekt i `content/shared.ts`. |
 | `src/components/site/Terminal.tsx` · `StreamText.tsx` | Tekst som skrives ut: skrivemaskin-hooks og terminalramma rundt kortene, og tekst som strømmer inn ord for ord. |
 | `src/components/site/Tilt.tsx` · `Cursor.tsx` · `SmoothScroll.tsx` | Bevegelseslaget: kort som vipper i 3D mot musa, ringen som følger pekeren, og myk scrolling med Lenis. |
 | `src/components/site/SectionHead.tsx` | Kommandolinje, overskrift og ingress øverst i hver seksjon. |
@@ -71,6 +72,14 @@ i to route-grupper: `app/(no)/` (norsk forside *og* hele verktøydelen) og
 en full sidelast, og bryteren i menyen skriver cookien før den navigerer.
 `src/proxy.ts` sender den som har valgt engelsk fra `/` til `/en` – bare fra
 rota, så en delt lenke alltid åpner på språket den peker til.
+
+**Rammene i arbeid-seksjonen** viser sidene som de er. Det krever at sida
+tillater å bli satt i ramme fra dette domenet: `stenumgaarddesign.no` sender i
+dag `X-Frame-Options: SAMEORIGIN` og står derfor med skisse (`framable: false`).
+Når den sender `Content-Security-Policy: frame-ancestors 'self'
+https://infinitywebcreations.no` i stedet, er det bare å sette `framable: true`.
+Visningsrom ligger bak passord, så ramma viser innloggingen; pek `preview.src`
+på en kundelenke (`/s/<token>`) for å vise ekte forslag.
 
 **Bevegelse er et lag, ikke en forutsetning.** Alt over sjekker
 `prefers-reduced-motion`: åpningen hoppes over, Lenis skrus av, ringen rundt

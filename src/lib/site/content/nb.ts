@@ -98,54 +98,26 @@ const agents: Content["agents"]["items"] = [
 ];
 
 const work = projects([
-      {
-        id: "sletten",
-        name: "Sletten Gulvstøp",
-        sector: "Betong og gulvstøp · Vinstra",
-        summary:
-          "Forside som snakker like tydelig til privatkunder og entreprenører, med totalpakker i stedet for prisliste. Eieren redigerer innholdet selv.",
-      },
-      {
+  {
         id: "stenumgaard",
         name: "Stenumgaard Design",
         sector: "3D-printing",
         summary:
           "Nettsted med produktvisning i 3D rett i nettleseren, slik at kunden kan snu på modellen før de bestiller.",
       },
-      {
+  {
         id: "visningsrom",
         name: "Visningsrom",
         sector: "Eget verktøy",
         summary:
           "Der jeg legger nettsideforslag så kunden kan se dem side ved side i desktop-, nettbrett- og mobilbredde og svare rett under. Ligger bak innlogging på denne siden.",
       },
-      {
+  {
         id: "cryptopay",
         name: "CryptoPay",
         sector: "Bitcoin-betaling og escrow · eget",
         summary:
           "Betalingsløsning der pengene går rett til mottakerens lommebok — on-chain og Lightning, med 2-av-3-escrow og innlogging med PGP-nøkkel i stedet for passord. Demoen kjører mot et oppdiktet API.",
-      },
-      {
-        id: "gauksas",
-        name: "Gauksås Gulvstøp",
-        sector: "Betong og gulvstøp · Vinstra",
-        summary:
-          "Mørkere variant av det samme designsystemet, bygget rundt samarbeidet med AS Betongpumping.",
-      },
-      {
-        id: "bw",
-        name: "BW Betonggulv",
-        sector: "Betonggulv · Vågå",
-        summary:
-          "Samme designsystem satt opp på nytt for et nabofirma — bevis på at grunnmuren tåler å bli gjenbrukt.",
-      },
-      {
-        id: "bondestad",
-        name: "Bondestad Eiendomsservice",
-        sector: "Grunnarbeid og gulvoppbygging · Vinstra",
-        summary:
-          "Bredere tjenestespekter enn de andre, så menyen og tjenestesidene måtte bygges om for å bære flere spor.",
       },
 ]);
 
@@ -229,7 +201,7 @@ export const nb: Content = {
   work: {
     command: "git log --oneline arbeid/",
     title: "Det jeg har bygget",
-    lead: "Mest bygg og anlegg i Gudbrandsdalen, pluss verktøyene jeg lager for å gjøre den jobben bedre. Skissene viser hvordan sidene er satt sammen.",
+    lead: "Tre ting du kan se på rett her. Rammene under er sidene selv, ikke skjermbilder – åpne dem i egen fane for å prøve.",
     status: { live: "i produksjon", wip: "under arbeid", delivered: "levert" },
     items: work,
   },

@@ -18,44 +18,32 @@ export const brandShared = {
 /** Felt per prosjekt som ikke oversettes. Teksten ligger i nb.ts / en.ts. */
 export const projectShared: Record<
   string,
-  Pick<Project, "stack" | "wireframe" | "href" | "status">
+  Pick<Project, "stack" | "wireframe" | "href" | "preview" | "status">
 > = {
-  sletten: {
-    stack: ["Next.js", "Sanity", "Vercel"],
-    wireframe: ["nav", "hero", "split", "grid", "foot"],
-    href: "https://slgulv.no",
-    status: "live",
-  },
   stenumgaard: {
     stack: ["Next.js", "Three.js", "Payload CMS"],
     wireframe: ["nav", "hero", "grid", "band", "foot"],
+    href: "https://stenumgaarddesign.no",
+    // stenumgaarddesign.no svarer med X-Frame-Options: SAMEORIGIN, så den kan
+    // ikke vises i ramme herfra ennå. Sett framable: true når sida sender
+    // Content-Security-Policy: frame-ancestors 'self' https://infinitywebcreations.no
+    preview: { src: "https://stenumgaarddesign.no", framable: false },
     status: "live",
   },
   visningsrom: {
     stack: ["Next.js", "Vercel Blob", "Sandkasse-iframes"],
     wireframe: ["nav", "band", "grid", "split", "foot"],
     href: "/visningsrom",
+    // Bak passord i produksjon, så ramma viser innloggingen. Pek den heller
+    // på en kundelenke (/s/<token>) når det finnes en du vil vise fram.
+    preview: { src: "/visningsrom", framable: true },
     status: "live",
   },
   cryptopay: {
     stack: ["Fastify", "Bitcoin", "Lightning", "OpenPGP"],
     wireframe: ["nav", "hero", "split", "band", "foot"],
     href: "/cryptopay",
-    status: "wip",
-  },
-  gauksas: {
-    stack: ["Next.js", "Sanity"],
-    wireframe: ["nav", "hero", "band", "grid", "foot"],
-    status: "wip",
-  },
-  bw: {
-    stack: ["Next.js", "Sanity"],
-    wireframe: ["nav", "hero", "grid", "foot"],
-    status: "wip",
-  },
-  bondestad: {
-    stack: ["Next.js", "Sanity"],
-    wireframe: ["nav", "split", "grid", "band", "foot"],
+    preview: { src: "/cryptopay/index.html", framable: true },
     status: "wip",
   },
 };
