@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import Tracker from "@/components/Tracker";
 import { brand } from "@/lib/site/content";
 import { introBootScript } from "@/lib/site/intro";
 import "./globals.css";
@@ -45,7 +46,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             før første bilde tegnes. Kjører før alt annet. */}
         <script dangerouslySetInnerHTML={{ __html: introBootScript }} />
       </head>
-      <body className="grain min-h-screen antialiased">{children}</body>
+      <body className="grain min-h-screen antialiased">
+        {children}
+        <Tracker />
+      </body>
     </html>
   );
 }

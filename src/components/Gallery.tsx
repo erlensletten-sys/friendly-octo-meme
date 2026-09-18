@@ -57,6 +57,9 @@ export default function Gallery({
             <Link href="/visningsrom/shares" className={btnGhost}>
               Delte lenker
             </Link>
+            <Link href="/visningsrom/analyse" className={btnGhost}>
+              Analyse
+            </Link>
           </>
         }
       />

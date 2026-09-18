@@ -9,3 +9,6 @@ next-env.d.ts
 .DS_Store
 .vercel
 .env*
+
+# Lokal notat med passordet - skal aldri i en commit.
+ADMIN_PASSWORD.txt

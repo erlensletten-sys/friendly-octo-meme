@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Ingen kildekart i produksjon: uten dem er det den minifiserte bunten, ikke
+  // den lesbare kildekoden, som ligger åpent i nettleseren.
+  productionBrowserSourceMaps: false,
+  poweredByHeader: false,
   // Opplastinger kan være store (ZIP med bilder). Gjelder server actions;
   // API-rutene leser body som stream og styres av MAX_UPLOAD_MB i .env.
   experimental: {
@@ -24,6 +28,10 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // Ingen andre kan legge sida i en iframe og late som den er deres.
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
     ];

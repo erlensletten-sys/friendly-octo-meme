@@ -17,10 +17,26 @@ const PROTECTED_PREFIXES = [
   "/api/comments",
 ];
 
+/**
+ * Programmer som finnes for å speile hele nettsteder, og roboter som samler
+ * tekst til trening av språkmodeller. De får 403 overalt unntatt robots.txt.
+ * Søkemotorer (Googlebot, Bingbot) og lenkeforhåndsvisninger slipper gjennom.
+ *
+ * Dette stopper de ærlige: user-agent kan forfalskes. Det er en sperre mot
+ * masseinnsamling, ikke mot en person som vil kopiere én side for hånd.
+ */
+const BLOCKED_AGENTS =
+  /httrack|webcopier|webzip|offline explorer|sitesucker|sitesnagger|teleport ?pro|webstripper|webreaper|website ?extractor|web ?downloader|wget|scrapy|python-requests|python-urllib|aiohttp|go-http-client|node-fetch|axios\/|gptbot|ccbot|claudebot|claude-web|anthropic-ai|bytespider|meta-externalagent|diffbot|imagesiftbot|cohere-ai|omgili|timpibot|img2dataset|petalbot/i;
+
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (pathname !== "/robots.txt" && BLOCKED_AGENTS.test(request.headers.get("user-agent") ?? "")) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
   if (!authEnabled()) return NextResponse.next();
 
-  const { pathname } = request.nextUrl;
   if (!PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }

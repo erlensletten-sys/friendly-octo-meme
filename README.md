@@ -173,6 +173,42 @@ skjermet:
 - Sett `PREVIEW_STRICT_SANDBOX=false` hvis en mal trenger `localStorage` for å
   vises riktig. Da mister du beskyttelsen over.
 
+### Mot kopiering
+
+Alt som vises i en nettleser kan lagres av den som sitter foran den – det
+finnes ingen teknikk som gjør en nettside umulig å kopiere. Det som er gjort er
+å stoppe masseinnsamlingen og å gjøre en kopi verdiløs:
+
+- `src/proxy.ts` svarer 403 til programmer som speiler hele nettsteder (HTTrack,
+  wget, SiteSucker …) og til roboter som samler tekst til KI-trening (GPTBot,
+  CCBot, ClaudeBot, Bytespider …). Søkemotorer slipper gjennom. `robots.txt`
+  (`src/app/robots.ts`) sier det samme høflig.
+- `X-Frame-Options` og `frame-ancestors 'self'` gjør at ingen kan legge sida i
+  en iframe på sitt eget domene.
+- Ingen kildekart i produksjon, og ingen `X-Powered-By`.
+- **Kopien melder seg selv.** `src/components/Tracker.tsx` sjekker hvilket
+  vertsnavn sida kjører på. Er det ikke ditt, sendes et varsel til
+  originalen, og den besøkende sendes videre dit. Kopier dukker opp øverst i
+  `/visningsrom/analyse` med domene, antall treff og når de sist ble sett.
+  Tillatte vertsnavn er `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_ALLOWED_HOSTS`,
+  localhost og Vercels egne adresser.
+
+## Analyse
+
+`/visningsrom/analyse` viser besøk, engasjement og klikk for i dag, 7, 30 eller
+90 dager: besøkende og sidevisninger, aktiv tid (fanen synlig og noen som
+faktisk rører musa), scrolldybde, hvilke seksjoner på forsiden som ble sett,
+hva som ble klikket på, kilder, kampanjer (`utm_*`), land, enheter og
+nettlesere, og en liste over dagens siste besøk.
+
+Målingen er `src/components/Tracker.tsx` i nettleseren og
+`/api/public/track` på serveren. Ingen cookies, ingen tredjepart. IP-adressen
+lagres aldri – den inngår bare i en hash med et døgnsalt, så samme besøkende
+telles én gang per dag uten å kunne kjennes igjen dagen etter. Roboter og dine
+egne besøk mens du er logget inn telles ikke. Hver sidevisning er én fil under
+`analytics/visits/<dag>/`; dager som er over telles opp én gang og lagres som
+`analytics/rollup/<dag>.json`, så panelet ikke leser tusenvis av filer.
+
 ### Passord
 
 Passordsjekken ligger i `src/proxy.ts` og gjelder `/visningsrom` og
@@ -205,6 +241,9 @@ Se `.env.example`. Kort oppsummert:
 | `STORAGE_DRIVER` | auto | Tving `fs` eller `blob`. |
 | `STORAGE_DIR` | `.data` | Mappe for lokal lagring. |
 | `PREVIEW_STRICT_SANDBOX` | `true` | CSP-sandbox på serverte preview-filer. |
+| `NEXT_PUBLIC_SITE_URL` | `https://infinitywebcreations.no` | Den ekte adressen. Kopier på andre domener melder fra hit og sender besøkende hit. |
+| `NEXT_PUBLIC_ALLOWED_HOSTS` | tom | Flere vertsnavn sida har lov til å kjøre på, kommaseparert. |
+| `ANALYTICS_SALT` | `ADMIN_PASSWORD` | Salt i besøkshashen. |
 
 ## Deploy
 
@@ -240,24 +279,28 @@ src/
     page.tsx                     hjemmesiden
     layout.tsx · globals.css     fonter, metadata og fargeskalaene
     login/                       innlogging til admin-delen
-    visningsrom/                 galleri, enkeltvisning, sammenligning, delte lenker
+    visningsrom/                 galleri, enkeltvisning, sammenligning, delte lenker, analyse
     s/[token]/page.tsx           kundemodus
     serve/[id]/[[...path]]/      sandboxet servering av opplastede filer
     cryptopay/                   stand-in-API for CryptoPay-demoen
     api/previews/                multipart-opplasting, client-token, finalize
     api/                         deling, kommentarer, innlogging
+    api/public/track/            mottak av besøksmålinger og kopivarsler
+    robots.ts                    robots.txt
   components/site/               hjemmesiden - åpning, hero, seksjoner, bevegelse
   components/                    Visningsrom
+  components/Tracker.tsx         besøksmåling og kopisjekk i nettleseren
   lib/
     site/content.ts              all tekst på hjemmesiden
     storage/                     fs- og blob-driver bak ett grensesnitt
     store.ts                     previews, delinger og kommentarer
+    analytics/                   lagring og opptelling av besøk
     uploads.ts                   felles opprettelse av previews (begge veier inn)
     uploadPath.ts                stiregler delt mellom nettleser og server
     zip.ts                       utpakking og valg av rot-dokument
     inject.ts                    broen som gir synkronisert scrolling
     cryptopayDemo.ts             tilstand og regler for CryptoPay-demoen
-  proxy.ts                       passordsjekken
+  proxy.ts                       passordsjekken og sperra mot kopiroboter
 public/cryptopay/                CryptoPay-sidene, kopiert fra produktet
 ```
 
