@@ -16,6 +16,7 @@ const PROTECTED_PREFIXES = [
   "/api/previews",
   "/api/shares",
   "/api/comments",
+  "/api/site-text",
 ];
 
 export async function proxy(request: NextRequest) {

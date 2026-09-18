@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { getContent, homeHref, otherLocale, type Content, type Locale } from "@/lib/site/content";
+import { homeHref, otherLocale, type Content, type Locale } from "@/lib/site/content";
 
 type SiteValue = {
   locale: Locale;
@@ -13,11 +13,16 @@ type SiteValue = {
 
 const SiteContext = createContext<SiteValue | null>(null);
 
-/** Gir alle komponentene på hjemmesiden innholdet på riktig språk. */
-export function SiteProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+/**
+ * Gir alle komponentene på hjemmesiden innholdet på riktig språk. Innholdet
+ * kommer ferdig fra serveren (standardtekst + admins overstyringer), så det
+ * må være rene data - ingen funksjoner.
+ */
+export function SiteProvider({ content, children }: { content: Content; children: React.ReactNode }) {
+  const locale = content.locale;
   const other = otherLocale(locale);
   return (
-    <SiteContext.Provider value={{ locale, t: getContent(locale), otherHref: homeHref(other), otherLocale: other }}>
+    <SiteContext.Provider value={{ locale, t: content, otherHref: homeHref(other), otherLocale: other }}>
       {children}
     </SiteContext.Provider>
   );

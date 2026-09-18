@@ -134,7 +134,10 @@ export type Content = {
       send: string;
       incomplete: string;
       footnote: string;
-      subject: (name: string, company: string) => string;
+      /** Emnefeltet i e-posten: "<subjectPrefix> <navn> (<firma>)". */
+      subjectPrefix: string;
+      /** Brukes som navn når feltet står tomt. */
+      subjectFallback: string;
     };
   };
   footer: { orgNumber: string };

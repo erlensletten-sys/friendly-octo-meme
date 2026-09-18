@@ -21,9 +21,8 @@ export default function Contact() {
 
   const ready = name.trim().length > 1 && message.trim().length > 4;
 
-  const mailto = `mailto:${brand.email}?subject=${encodeURIComponent(
-    f.subject(name, company),
-  )}&body=${encodeURIComponent(`${message}\n\n— ${name}${company ? `, ${company}` : ""}`)}`;
+  const subject = `${f.subjectPrefix} ${name || f.subjectFallback}${company ? ` (${company})` : ""}`;
+  const mailto = `mailto:${brand.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`${message}\n\n— ${name}${company ? `, ${company}` : ""}`)}`;
 
   return (
     <section id="kontakt" className="scroll-mt-24 border-t border-ink-800/80 bg-ink-900/40">

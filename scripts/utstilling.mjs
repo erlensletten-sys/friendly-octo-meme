@@ -5,8 +5,12 @@
  * hjemmesiden peker på. Kjøres på serveren der både appen og nettsidefilene
  * ligger:
  *
- *   node scripts/utstilling.mjs --dir /var/www/stenumgaard --title "Stenumgaard Design" \
- *     --slug utstilling [--dir demo/forslag-b --title "Forslag B"] [--app http://localhost:3000]
+ *   node scripts/utstilling.mjs --find stenumgaard --title "Stenumgaard Design" --slug utstilling
+ *   node scripts/utstilling.mjs --dir /var/www/stenumgaard/dist --title "…" --slug utstilling \
+ *     [--dir demo/forslag-b --title "Forslag B"] [--app http://localhost:3000]
+ *
+ * --find leter i mappa ved siden av prosjektet (../) etter et navn og bruker
+ * byggemappa der. --dir peker rett på en mappe.
  *
  * Passordet leses fra ADMIN_PASSWORD i miljøet eller .env.local. Går alt
  * gjennom det vanlige API-et, så det virker likt med fs- og blob-lagring.
@@ -15,8 +19,46 @@
  */
 
 import { readFile, readdir, stat } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import { zipSync } from "fflate";
+
+/**
+ * --find <navn>: leter etter en mappe ved siden av prosjektmappa (../) som
+ * inneholder navnet, og bruker byggemappa i den (dist/, out/, build/ eller
+ * rota hvis index.html ligger der). Sier fra hvis sida bruker absolutte
+ * stier - da vises den ikke riktig fra /serve/ uten en ny build.
+ */
+async function findSite(name) {
+  const parent = resolve("..");
+  const want = name.toLowerCase();
+  const candidates = [];
+  for (const entry of await readdir(parent, { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name.toLowerCase().includes(want)) candidates.push(join(parent, entry.name));
+  }
+  if (candidates.length === 0) throw new Error(`Fant ingen mappe med «${name}» i navnet under ${parent}`);
+  if (candidates.length > 1) console.log(`· flere treff, bruker den første: ${candidates.map((c) => basename(c)).join(", ")}`);
+  const root = candidates[0];
+  for (const sub of ["dist", "out", "build", "public", "."]) {
+    const dir = resolve(root, sub);
+    try {
+      await stat(join(dir, "index.html"));
+      return dir;
+    } catch {
+      /* neste */
+    }
+  }
+  throw new Error(`${root} har ingen index.html i dist/, out/, build/, public/ eller rota. Er sida bygget?`);
+}
+
+/** Absolutte stier (/assets/…) peker feil når kopien serveres fra /serve/<id>/. */
+async function checkRelativePaths(dir) {
+  const html = await readFile(join(dir, "index.html"), "utf8");
+  const abs = [...html.matchAll(/(?:src|href)=["'](\/[^/"'][^"']*)["']/g)].map((m) => m[1]).filter((u) => !u.startsWith("//"));
+  if (abs.length) {
+    console.log(`! ${basename(dir)}/index.html bruker absolutte stier (${abs.slice(0, 3).join(", ")}${abs.length > 3 ? ", …" : ""}).`);
+    console.log("  De peker feil fra /serve/. Bygg sida med relativ base (Vite: base './', Next: assetPrefix './') og kjør igjen.");
+  }
+}
 
 const args = process.argv.slice(2);
 const dirs = [];
@@ -27,6 +69,7 @@ let group = "Utstilling";
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
   if (a === "--dir") dirs.push(resolve(args[++i]));
+  else if (a === "--find") dirs.push(await findSite(args[++i]));
   else if (a === "--title") titles.push(args[++i]);
   else if (a === "--slug") slug = args[++i];
   else if (a === "--app") app = args[++i].replace(/\/$/, "");
@@ -37,7 +80,7 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 if (dirs.length === 0 || !slug) {
-  console.error("Bruk: node scripts/utstilling.mjs --dir <mappe> --title <navn> --slug <slug> [--dir … --title …]");
+  console.error("Bruk: node scripts/utstilling.mjs (--dir <mappe> | --find <navn>) --title <navn> --slug <slug> [flere --dir/--find …]");
   process.exit(2);
 }
 
@@ -105,6 +148,7 @@ for (let i = 0; i < dirs.length; i++) {
   const title = titles[i] ?? dir.split("/").pop();
   const info = await stat(dir);
   if (!info.isDirectory()) throw new Error(`${dir} er ikke en mappe`);
+  await checkRelativePaths(dir);
   const { zip, count } = await zipDir(dir);
   const form = new FormData();
   form.set("title", title);

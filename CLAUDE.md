@@ -27,7 +27,7 @@ forklarer hvordan det skal bygges videre.
 | Sannhetskilde | Hva den eier |
 | --- | --- |
 | `src/app/globals.css` | Fargetokens, radier, fonter og alle egendefinerte utilities (`panel`, `field`, `mono`, `edge-glow`, `scanlines`, `loop-text`, `caret`, `grain`). |
-| `src/lib/site/content/` | All tekst på hjemmesiden: `nb.ts` og `en.ts` fyller samme `Content`-form fra `types.ts`; `shared.ts` har det som er likt. Ingen synlig streng skal skrives i en komponent – komponentene henter alt via `useSite()`. |
+| `src/lib/site/content/` | Standardteksten på hjemmesiden: `nb.ts` og `en.ts` fyller samme `Content`-form fra `types.ts`; `shared.ts` har det som er likt. Ingen synlig streng skal skrives i en komponent – komponentene henter alt via `useSite()`. Admin kan overstyre hvert tekstfelt fra `/visningsrom/tekst` (lagres i lageret, legges oppå ved rendering) – så `Content` må være rene data, aldri funksjoner. |
 | `src/components/ui.tsx` | Knappeklasser og primitiver for Visningsrom (`btnPrimary`, `Panel`, `PageHeader`, `EmptyState`). |
 | `src/components/site/Terminal.tsx` | `TerminalChrome` — vindusramma som går igjen over hele hjemmesiden. |
 | `src/components/site/SectionHead.tsx` | Kommandolinje + overskrift + ingress øverst i hver seksjon. |

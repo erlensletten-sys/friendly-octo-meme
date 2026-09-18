@@ -261,7 +261,8 @@ export const en: Content = {
       incomplete: "Fill in your name and a description",
       footnote:
         "The button opens your e-mail app with the text filled in. Nothing is stored on this site, and no tracking cookies are set.",
-      subject: (name, company) => `Enquiry from ${name || "the website"}${company ? ` (${company})` : ""}`,
+      subjectPrefix: "Enquiry from",
+      subjectFallback: "the website",
     },
   },
   footer: { orgNumber: "org. no." },

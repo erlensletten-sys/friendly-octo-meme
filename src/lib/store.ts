@@ -2,6 +2,7 @@ import "server-only";
 import { newId } from "./id";
 import { storage } from "./storage";
 import type { Comment, Preview, Share } from "./types";
+import type { TextOverrides } from "@/lib/site/overrides";
 
 const JSON_TYPE = "application/json; charset=utf-8";
 const decoder = new TextDecoder();
@@ -116,4 +117,23 @@ export async function addComment(
 export async function deleteComment(previewId: string, commentId: string): Promise<void> {
   if (!/^[a-z0-9]{4,32}$/.test(commentId)) return;
   await storage().remove(`comments/${previewId}/${commentId}.json`);
+}
+
+/* ------------------------------------------------------------- tekst på sida */
+
+
+const siteTextKey = (locale: string) => `site/text.${locale}.json`;
+
+/** Admins overstyringer av teksten på hjemmesiden, per språk. */
+export async function getSiteText(locale: "nb" | "en"): Promise<TextOverrides> {
+  try {
+    return (await readJson<TextOverrides>(siteTextKey(locale))) ?? {};
+  } catch {
+    // Uten lager (f.eks. under bygging) vises standardteksten.
+    return {};
+  }
+}
+
+export async function saveSiteText(locale: "nb" | "en", overrides: TextOverrides): Promise<void> {
+  await writeJson(siteTextKey(locale), overrides);
 }

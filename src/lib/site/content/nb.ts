@@ -261,7 +261,8 @@ export const nb: Content = {
       incomplete: "Fyll ut navn og beskrivelse",
       footnote:
         "Knappen åpner e-postprogrammet ditt med teksten ferdig utfylt. Ingenting lagres på denne siden, og det settes ingen sporingscookies.",
-      subject: (name, company) => `Henvendelse fra ${name || "nettsiden"}${company ? ` (${company})` : ""}`,
+      subjectPrefix: "Henvendelse fra",
+      subjectFallback: "nettsiden",
     },
   },
   footer: { orgNumber: "org.nr" },

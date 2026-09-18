@@ -82,6 +82,16 @@ SAMEORIGIN` og kan ikke settes i ramme direkte, men en kopi servert fra
 sender videre til den første pakken i delingen; Visningsrom-kortet peker på
 kundelenka `/s/utstilling`. Se **Utstillingen** under.
 
+**Teksten kan endres uten kode.** `/visningsrom/tekst` (bak passord) viser
+hvert tekstfelt på hjemmesiden, per språk, med standardteksten fra koden som
+plassholder. Det admin skriver lagres som overstyring (`site/text.<språk>.json`
+i lageret) og legges oppå standardteksten når sida rendres
+(`src/lib/site/load.ts` → `overrides.ts`). Tomt felt = standardtekst; bare
+endrede felt lagres, så ny standardtekst i koden slår gjennom overalt der
+ingen har skrevet noe eget. Lagring bygger forsida på nytt med én gang
+(`revalidatePath`). Stier, lenker, status og skisser kan ikke endres der – de
+er struktur, ikke tekst.
+
 **Bevegelse er et lag, ikke en forutsetning.** Alt over sjekker
 `prefers-reduced-motion`: åpningen hoppes over, Lenis skrus av, ringen rundt
 pekeren vises ikke, kortene slutter å vippe og sløyfa står stille. Vipp og ring
@@ -99,7 +109,7 @@ e-postprogram. Ingen skjematjeneste, ingen database, ingen sporingscookies.
 
 ## Visningsrom
 
-### De fem visningene
+### Visningene
 
 | Rute | Hva den gjør |
 | --- | --- |
@@ -107,6 +117,7 @@ e-postprogram. Ingen skjematjeneste, ingen database, ingen sporingscookies.
 | `/visningsrom/preview/<id>` | Én preview i full bredde, med enhetsvelger og detaljer. |
 | `/visningsrom/compare?ids=a,b` | To til fire paneler side ved side, felles enhetsbredde og synkronisert scrolling. |
 | `/visningsrom/shares` | Oversikt over delte lenker, med mulighet til å trekke dem tilbake. |
+| `/visningsrom/tekst` | Rediger teksten på hjemmesiden, norsk og engelsk. |
 | `/s/<token>` | Kundemodus. Ingen opplasting eller sletting – bare forslagene og et kommentarfelt. Åpen uten passord. |
 | `/vis/<slug>` | Sida selv i en deling med valgt slug – videresending til `/serve/<id>/`. Brukes av hjemmesiden. |
 
@@ -120,13 +131,15 @@ Arbeid-seksjonen på hjemmesiden henter det den viser fra en deling med slug
 `utstilling`. Den lages på serveren der både appen og nettsidefilene ligger:
 
 ```bash
-node scripts/utstilling.mjs \
-  --dir /sti/til/stenumgaard/dist --title "Stenumgaard Design" \
-  --dir demo/forslag-b            --title "Forslag B" \
-  --slug utstilling [--app http://localhost:3000]
+node scripts/utstilling.mjs --find stenumgaard --title "Stenumgaard Design" --slug utstilling
 ```
 
-Skriptet zipper hver mappe, laster den opp gjennom `/api/previews`, sletter en
+`--find <navn>` leter i mappa ved siden av prosjektet (`../`) etter en mappe
+med navnet i seg og bruker byggemappa der (`dist/`, `out/`, `build/`,
+`public/` eller rota – der `index.html` ligger). `--dir <mappe>` peker rett på
+en mappe; begge kan gjentas for flere pakker (`--title` per pakke,
+`--app http://localhost:3000` om appen kjører et annet sted). Skriptet sier
+fra hvis `index.html` bruker absolutte stier. Det zipper hver mappe, laster den opp gjennom `/api/previews`, sletter en
 eventuell gammel deling med samme slug, og lager en ny gjennom `/api/shares`.
 Passordet leses fra `ADMIN_PASSWORD` i miljøet eller `.env.local`. Kjør det på
 nytt for å bytte innhold – hjemmesiden trenger ingen kodeendring, fordi den
@@ -303,13 +316,15 @@ src/
       vis/[slug]/                utstillingen: slug → /serve/<id>/
       cryptopay/                 stand-in-API for CryptoPay-demoen
       api/previews/              multipart-opplasting, client-token, finalize
-      api/                       deling, kommentarer, innlogging
+      api/                       deling, kommentarer, innlogging, tekst på sida
     (en)/en/                     engelsk rot-layout (lang="en") og hjemmesiden på engelsk
   components/site/               hjemmesiden - åpning, språkvalg, hero, seksjoner, bevegelse
   components/                    Visningsrom
   lib/
     site/content/                nb.ts, en.ts, shared.ts, types.ts - all tekst på hjemmesiden
     site/lang.ts                 språkcookien
+    site/overrides.ts            admins tekstendringer: flate stier oppå innholdet
+    site/load.ts                 innhold + overstyringer, det sida faktisk viser
     storage/                     fs- og blob-driver bak ett grensesnitt
     store.ts                     previews, delinger og kommentarer
     uploads.ts                   felles opprettelse av previews (begge veier inn)

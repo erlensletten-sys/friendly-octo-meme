@@ -1,4 +1,4 @@
-import type { Locale } from "@/lib/site/content";
+import type { Content } from "@/lib/site/content";
 import Agents from "./Agents";
 import Contact from "./Contact";
 import Cursor from "./Cursor";
@@ -14,9 +14,9 @@ import SmoothScroll from "./SmoothScroll";
 import Work from "./Work";
 
 /** Hele forsida. Samme komponent for / og /en; bare innholdet byttes. */
-export default function HomePage({ locale }: { locale: Locale }) {
+export default function HomePage({ content }: { content: Content }) {
   return (
-    <SiteProvider locale={locale}>
+    <SiteProvider content={content}>
       <LanguageGate>
         <IntroGate />
       </LanguageGate>
