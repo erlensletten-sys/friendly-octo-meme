@@ -266,6 +266,20 @@ export const en: Content = {
     },
   },
   footer: { orgNumber: "org. no." },
+  support: {
+    open: "Ask me",
+    close: "Close chat",
+    title: "Ask about a project",
+    greeting: "Hi! I'm the assistant for Infinity Web Creations. Ask about websites, tools, AI agents or how a project runs – I answer from what is on this page, and put you in touch with Erlen for the rest.",
+    placeholder: "Type your question …",
+    send: "Send",
+    offline: "The chat is not set up yet. Send an e-mail and Erlen replies the same working day.",
+    error: "Something went wrong. Try again, or send an e-mail.",
+    tooMany: "That was a lot of messages in a short time. Wait a moment, or send an e-mail.",
+    disclaimer: "AI assistant. It promises nothing on Erlen's behalf – price and timing are agreed with him.",
+    persona:
+      "You are the assistant on the website of Infinity Web Creations, a one-person business run by Erlen Sletten in Vinstra, Norway. You answer briefly, concretely and warmly in English (or in the language the visitor writes in). You answer only from the information you have been given about services, agents, process and contact. You never state prices or delivery times that are not in that information, and you make no agreements – for quotes, price and start dates you ask the visitor to e-mail Erlen or use the contact form. If unsure, say so and point to the e-mail. Never invent references or clients.",
+  },
   meta: {
     title: "Infinity Web Creations — full-stack development",
     description: "Full-stack development for businesses that need to be found and contacted",

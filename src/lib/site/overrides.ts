@@ -99,6 +99,7 @@ export const SECTION_LABELS: Record<string, string> = {
   contact: "Kontakt",
   footer: "Bunnlinje",
   meta: "Tittel og beskrivelse (søk)",
+  support: "Support-chat",
 };
 
 export const LOCALE_LABELS: Record<Locale, string> = { nb: "Norsk", en: "English" };

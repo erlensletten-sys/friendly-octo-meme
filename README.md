@@ -64,6 +64,7 @@ skriver UI-kode her.
 | `src/components/site/Terminal.tsx` · `StreamText.tsx` | Tekst som skrives ut: skrivemaskin-hooks og terminalramma rundt kortene, og tekst som strømmer inn ord for ord. |
 | `src/components/site/Tilt.tsx` · `Cursor.tsx` · `SmoothScroll.tsx` | Bevegelseslaget: kort som vipper i 3D mot musa, ringen som følger pekeren, og myk scrolling med Lenis. |
 | `src/components/site/SectionHead.tsx` | Kommandolinje, overskrift og ingress øverst i hver seksjon. |
+| `src/components/site/SupportChat.tsx` | Support-chatten: knapp nede til høyre og et terminalvindu som svares av en AI-agent. |
 
 **To språk, to adresser.** Norsk bor på `/`, engelsk på `/en`, med `hreflang`
 begge veier. Fordi `<html lang>` bare kan settes av en rot-layout, er appen delt
@@ -91,6 +92,20 @@ endrede felt lagres, så ny standardtekst i koden slår gjennom overalt der
 ingen har skrevet noe eget. Lagring bygger forsida på nytt med én gang
 (`revalidatePath`). Stier, lenker, status og skisser kan ikke endres der – de
 er struktur, ikke tekst.
+
+**Support-chatten** nede til høyre svares av en AI-agent (Anthropic,
+`src/lib/support.ts` + `/api/support`). Agenten får en systemprompt bygget
+fra innholdet på sida – tjenester, agenter, prosess, kontakt, med admins
+tekstendringer – på det språket den besøkende har valgt, og er instruert til
+bare å svare ut fra det, aldri oppgi priser som ikke står der, og sende folk
+til e-post for tilbud og avtaler. Hvordan den presenterer seg (`support.persona`)
+og alle tekstene i vinduet kan endres fra `/visningsrom/tekst`. Samtalen lever
+i besøkendes fane (`sessionStorage`) og sendes med i hver forespørsel;
+serveren lagrer ingenting. Svaret strømmes inn ord for ord. Bremset til 20
+meldinger per IP og 400 totalt per ti minutter. Uten `ANTHROPIC_API_KEY`
+viser chatten en beskjed om å sende e-post; `ANTHROPIC_API_KEY=mock` gir et
+fast testsvar lokalt. Modell velges med `SUPPORT_MODEL` (standard
+`claude-sonnet-5`).
 
 **Bevegelse er et lag, ikke en forutsetning.** Alt over sjekker
 `prefers-reduced-motion`: åpningen hoppes over, Lenis skrus av, ringen rundt
@@ -274,6 +289,8 @@ Se `.env.example`. Kort oppsummert:
 | `STORAGE_DRIVER` | auto | Tving `fs` eller `blob`. |
 | `STORAGE_DIR` | `.data` | Mappe for lokal lagring. |
 | `PREVIEW_STRICT_SANDBOX` | `true` | CSP-sandbox på serverte preview-filer. |
+| `ANTHROPIC_API_KEY` | tom | Slår på support-chatten. `mock` = fast testsvar. |
+| `SUPPORT_MODEL` | `claude-sonnet-5` | Modellen chatten bruker. |
 
 ## Deploy
 
@@ -316,7 +333,7 @@ src/
       vis/[slug]/                utstillingen: slug → /serve/<id>/
       cryptopay/                 stand-in-API for CryptoPay-demoen
       api/previews/              multipart-opplasting, client-token, finalize
-      api/                       deling, kommentarer, innlogging, tekst på sida
+      api/                       deling, kommentarer, innlogging, tekst på sida, support-chat
     (en)/en/                     engelsk rot-layout (lang="en") og hjemmesiden på engelsk
   components/site/               hjemmesiden - åpning, språkvalg, hero, seksjoner, bevegelse
   components/                    Visningsrom
@@ -332,6 +349,7 @@ src/
     zip.ts                       utpakking og valg av rot-dokument
     inject.ts                    broen som gir synkronisert scrolling
     cryptopayDemo.ts             tilstand og regler for CryptoPay-demoen
+    support.ts                   support-chatten: systemprompt fra innholdet, strømming, brems
   proxy.ts                       passordsjekken
 public/cryptopay/                CryptoPay-sidene, kopiert fra produktet
 scripts/utstilling.mjs           legger en mappe inn i Visningsrom som utstillingen

@@ -266,6 +266,20 @@ export const nb: Content = {
     },
   },
   footer: { orgNumber: "org.nr" },
+  support: {
+    open: "Spør meg",
+    close: "Lukk chatten",
+    title: "Spør om et oppdrag",
+    greeting: "Hei! Jeg er assistenten til Infinity Web Creations. Spør om nettsider, verktøy, AI-agenter eller hvordan et oppdrag går – jeg svarer ut fra det som står på denne sida, og setter deg i kontakt med Erlen for resten.",
+    placeholder: "Skriv spørsmålet ditt …",
+    send: "Send",
+    offline: "Chatten er ikke satt opp ennå. Send en e-post, så svarer Erlen samme virkedag.",
+    error: "Noe gikk galt. Prøv igjen, eller send en e-post.",
+    tooMany: "Det ble mange meldinger på kort tid. Vent litt, eller send en e-post.",
+    disclaimer: "AI-assistent. Den lover ingenting på Erlens vegne – pris og tid avtales med ham.",
+    persona:
+      "Du er assistenten på nettsiden til Infinity Web Creations, et enkeltpersonforetak drevet av Erlen Sletten i Vinstra. Du svarer kort, konkret og vennlig på norsk bokmål (eller på det språket den besøkende skriver på). Du svarer bare ut fra opplysningene du har fått om tjenester, agenter, prosess og kontakt. Du oppgir aldri priser eller leveringstider som ikke står der, og du inngår ingen avtaler – for tilbud, pris og oppstart ber du den besøkende sende e-post til Erlen eller bruke kontaktskjemaet. Er du usikker, si det, og pek til e-posten. Ikke finn på referanser eller kunder.",
+  },
   meta: {
     title: "Infinity Web Creations — fullstack utvikling",
     description: "Fullstack utvikling for bedrifter som skal bli funnet og kontaktet",

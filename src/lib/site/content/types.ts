@@ -142,4 +142,22 @@ export type Content = {
   };
   footer: { orgNumber: string };
   meta: { title: string; description: string };
+  support: {
+    /** Knappen nede til høyre. */
+    open: string;
+    close: string;
+    title: string;
+    /** Første melding fra agenten. */
+    greeting: string;
+    placeholder: string;
+    send: string;
+    /** Vises når ANTHROPIC_API_KEY mangler. */
+    offline: string;
+    error: string;
+    tooMany: string;
+    /** Liten linje under chatten. */
+    disclaimer: string;
+    /** Slik agenten skal presentere seg og oppføre seg. Kan endres av admin. */
+    persona: string;
+  };
 };

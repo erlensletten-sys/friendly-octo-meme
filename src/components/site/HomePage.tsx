@@ -11,6 +11,7 @@ import SiteFooter from "./SiteFooter";
 import SiteNav from "./SiteNav";
 import { SiteProvider } from "./SiteContext";
 import SmoothScroll from "./SmoothScroll";
+import SupportChat from "./SupportChat";
 import Work from "./Work";
 
 /** Hele forsida. Samme komponent for / og /en; bare innholdet byttes. */
@@ -32,6 +33,7 @@ export default function HomePage({ content }: { content: Content }) {
         <Contact />
       </main>
       <SiteFooter />
+      <SupportChat />
     </SiteProvider>
   );
 }
