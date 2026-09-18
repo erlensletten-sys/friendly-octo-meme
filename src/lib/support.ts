@@ -10,17 +10,70 @@ import type { Content } from "@/lib/site/content";
  * så agenten sier det sida sier, ikke noe eget. Den har ingen verktøy, ingen
  * tilgang til Visningsrom, og lagrer ingenting: samtalen lever i besøkendes
  * fane og sendes med i hver forespørsel.
+ *
+ * Tre leverandører, valgt av miljøvariablene (se .env.example):
+ *  - cloudflare: Workers AI, gratis kvote hver dag. Standard når
+ *    CLOUDFLARE_ACCOUNT_ID og CLOUDFLARE_AI_TOKEN er satt.
+ *  - openai: et hvilket som helst OpenAI-kompatibelt endepunkt (Ollama,
+ *    Groq, OpenRouter …) via SUPPORT_BASE_URL og SUPPORT_API_KEY.
+ *  - anthropic: Claude via ANTHROPIC_API_KEY.
+ * Alle strømmer svaret som ren tekst til klienten, så resten av appen ser
+ * ingen forskjell.
  */
 
-export const DEFAULT_MODEL = "claude-sonnet-5";
 export const MAX_TURNS = 12; // meldinger som sendes med (de siste)
 export const MAX_MESSAGE_CHARS = 1500;
 export const MAX_OUTPUT_TOKENS = 500;
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
+type Provider =
+  | { kind: "mock" }
+  | { kind: "cloudflare"; baseUrl: string; apiKey: string; model: string }
+  | { kind: "openai"; baseUrl: string; apiKey: string; model: string }
+  | { kind: "anthropic"; apiKey: string; model: string };
+
+const DEFAULTS = {
+  cloudflare: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  openai: "llama3.1",
+  anthropic: "claude-sonnet-5",
+};
+
+const env = (name: string) => process.env[name]?.trim() ?? "";
+
+/** Hvilken leverandør miljøet peker på. null = chatten er av. */
+export function resolveProvider(): Provider | null {
+  const forced = env("SUPPORT_PROVIDER").toLowerCase();
+  const model = env("SUPPORT_MODEL");
+
+  if (env("ANTHROPIC_API_KEY") === "mock" || forced === "mock") return { kind: "mock" };
+
+  const cf = { accountId: env("CLOUDFLARE_ACCOUNT_ID"), token: env("CLOUDFLARE_AI_TOKEN") };
+  const oa = { baseUrl: env("SUPPORT_BASE_URL").replace(/\/$/, ""), apiKey: env("SUPPORT_API_KEY") };
+  const an = env("ANTHROPIC_API_KEY");
+
+  const order = forced ? [forced] : ["cloudflare", "openai", "anthropic"];
+  for (const kind of order) {
+    if (kind === "cloudflare" && cf.accountId && cf.token) {
+      return {
+        kind,
+        baseUrl: `https://api.cloudflare.com/client/v4/accounts/${cf.accountId}/ai/v1`,
+        apiKey: cf.token,
+        model: model || DEFAULTS.cloudflare,
+      };
+    }
+    if (kind === "openai" && oa.baseUrl) {
+      return { kind, baseUrl: oa.baseUrl, apiKey: oa.apiKey, model: model || DEFAULTS.openai };
+    }
+    if (kind === "anthropic" && an) {
+      return { kind, apiKey: an, model: model || DEFAULTS.anthropic };
+    }
+  }
+  return null;
+}
+
 export function supportEnabled(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+  return resolveProvider() !== null;
 }
 
 /** Alt agenten får vite. Rene fakta fra sida, ingen løfter. */
@@ -68,7 +121,7 @@ export function sanitizeMessages(input: unknown): ChatMessage[] {
     if ((role !== "user" && role !== "assistant") || typeof content !== "string") continue;
     const text = content.trim().slice(0, MAX_MESSAGE_CHARS);
     if (!text) continue;
-    // To like roller på rad slås sammen - API-et krever veksling.
+    // To like roller på rad slås sammen - API-ene krever veksling.
     const last = out[out.length - 1];
     if (last && last.role === role) last.content += "\n" + text;
     else out.push({ role, content: text });
@@ -79,36 +132,27 @@ export function sanitizeMessages(input: unknown): ChatMessage[] {
   return trimmed;
 }
 
-/**
- * Strømmer svaret som ren tekst. "mock" som nøkkel gir en fast tekst, så
- * chatten kan prøves lokalt uten konto.
- */
-export async function streamReply(system: string, messages: ChatMessage[]): Promise<ReadableStream<Uint8Array>> {
-  const key = process.env.ANTHROPIC_API_KEY?.trim() ?? "";
-  const encoder = new TextEncoder();
+/* ---------------------------------------------------------- leverandørene */
 
-  if (key === "mock") {
-    const text = "Dette er et testsvar fra support-chatten. Sett en ekte ANTHROPIC_API_KEY for å få svar fra agenten.";
-    return new ReadableStream({
-      async start(controller) {
-        for (const word of text.split(" ")) {
-          controller.enqueue(encoder.encode(word + " "));
-          await new Promise((r) => setTimeout(r, 40));
-        }
-        controller.close();
-      },
-    });
-  }
+const encoder = new TextEncoder();
 
-  const client = new Anthropic({ apiKey: key });
-  const stream = client.messages.stream({
-    model: process.env.SUPPORT_MODEL?.trim() || DEFAULT_MODEL,
-    max_tokens: MAX_OUTPUT_TOKENS,
-    system,
-    messages,
-  });
-
+function mockStream(): ReadableStream<Uint8Array> {
+  const text = "Dette er et testsvar fra support-chatten. Sett opp en leverandør i .env.local for å få svar fra agenten.";
   return new ReadableStream({
+    async start(controller) {
+      for (const word of text.split(" ")) {
+        controller.enqueue(encoder.encode(word + " "));
+        await new Promise((r) => setTimeout(r, 40));
+      }
+      controller.close();
+    },
+  });
+}
+
+function anthropicStream(p: Extract<Provider, { kind: "anthropic" }>, system: string, messages: ChatMessage[]) {
+  const client = new Anthropic({ apiKey: p.apiKey });
+  const stream = client.messages.stream({ model: p.model, max_tokens: MAX_OUTPUT_TOKENS, system, messages });
+  return new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
         for await (const event of stream) {
@@ -125,6 +169,73 @@ export async function streamReply(system: string, messages: ChatMessage[]): Prom
       stream.abort();
     },
   });
+}
+
+/**
+ * OpenAI-formatet, som Cloudflare Workers AI, Ollama, Groq m.fl. snakker.
+ * Strømmen er SSE med "data: {json}"-linjer; vi plukker ut delta.content.
+ */
+async function openAiStream(
+  p: Extract<Provider, { kind: "cloudflare" | "openai" }>,
+  system: string,
+  messages: ChatMessage[],
+): Promise<ReadableStream<Uint8Array>> {
+  const res = await fetch(`${p.baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(p.apiKey ? { authorization: `Bearer ${p.apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      model: p.model,
+      max_tokens: MAX_OUTPUT_TOKENS,
+      stream: true,
+      messages: [{ role: "system", content: system }, ...messages],
+    }),
+  });
+  if (!res.ok || !res.body) {
+    throw new Error(`${p.kind} svarte ${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}`);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      const { value, done } = await reader.read();
+      if (done) {
+        controller.close();
+        return;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (data === "[DONE]") continue;
+        try {
+          const json = JSON.parse(data) as { choices?: { delta?: { content?: string } }[]; response?: string };
+          const text = json.choices?.[0]?.delta?.content ?? json.response ?? "";
+          if (text) controller.enqueue(encoder.encode(text));
+        } catch {
+          /* halv linje - kommer i neste bolk */
+        }
+      }
+    },
+    cancel() {
+      void reader.cancel();
+    },
+  });
+}
+
+/** Strømmer svaret som ren tekst fra den leverandøren miljøet peker på. */
+export async function streamReply(system: string, messages: ChatMessage[]): Promise<ReadableStream<Uint8Array>> {
+  const p = resolveProvider();
+  if (!p) throw new Error("Ingen leverandør er satt opp.");
+  if (p.kind === "mock") return mockStream();
+  if (p.kind === "anthropic") return anthropicStream(p, system, messages);
+  return openAiStream(p, system, messages);
 }
 
 /* ------------------------------------------------------------ enkel brems */

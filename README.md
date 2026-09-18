@@ -93,8 +93,8 @@ ingen har skrevet noe eget. Lagring bygger forsida på nytt med én gang
 (`revalidatePath`). Stier, lenker, status og skisser kan ikke endres der – de
 er struktur, ikke tekst.
 
-**Support-chatten** nede til høyre svares av en AI-agent (Anthropic,
-`src/lib/support.ts` + `/api/support`). Agenten får en systemprompt bygget
+**Support-chatten** nede til høyre svares av en AI-agent
+(`src/lib/support.ts` + `/api/support`). Agenten får en systemprompt bygget
 fra innholdet på sida – tjenester, agenter, prosess, kontakt, med admins
 tekstendringer – på det språket den besøkende har valgt, og er instruert til
 bare å svare ut fra det, aldri oppgi priser som ikke står der, og sende folk
@@ -102,10 +102,22 @@ til e-post for tilbud og avtaler. Hvordan den presenterer seg (`support.persona`
 og alle tekstene i vinduet kan endres fra `/visningsrom/tekst`. Samtalen lever
 i besøkendes fane (`sessionStorage`) og sendes med i hver forespørsel;
 serveren lagrer ingenting. Svaret strømmes inn ord for ord. Bremset til 20
-meldinger per IP og 400 totalt per ti minutter. Uten `ANTHROPIC_API_KEY`
+meldinger per IP og 400 totalt per ti minutter.
+
+Tre leverandører, valgt i `.env.local` (den første som er satt opp brukes,
+eller `SUPPORT_PROVIDER` tvinger):
+
+| Leverandør | Variabler | Kostnad |
+| --- | --- | --- |
+| **Cloudflare Workers AI** (standard) | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_TOKEN` | Gratis kvote: 10 000 «neurons» per dag ≈ 140 svar med `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, ≈ 200 med `llama-3.1-8b`. Over det: øre-beløp. |
+| OpenAI-kompatibelt endepunkt | `SUPPORT_BASE_URL`, `SUPPORT_API_KEY` | Ollama på serveren er gratis (tregt uten GPU); Groq/OpenRouter etter deres vilkår. |
+| Anthropic (Claude) | `ANTHROPIC_API_KEY` | Per token, ~0,005 $ per svar med `claude-sonnet-5`. |
+
+`SUPPORT_MODEL` overstyrer leverandørens standardmodell. Uten noen leverandør
 viser chatten en beskjed om å sende e-post; `ANTHROPIC_API_KEY=mock` gir et
-fast testsvar lokalt. Modell velges med `SUPPORT_MODEL` (standard
-`claude-sonnet-5`).
+fast testsvar lokalt. Cloudflare: konto-ID står i dashbordet under Workers &
+Pages → Overview; token lages under My Profile → API Tokens med malen
+«Workers AI».
 
 **Bevegelse er et lag, ikke en forutsetning.** Alt over sjekker
 `prefers-reduced-motion`: åpningen hoppes over, Lenis skrus av, ringen rundt
@@ -289,8 +301,10 @@ Se `.env.example`. Kort oppsummert:
 | `STORAGE_DRIVER` | auto | Tving `fs` eller `blob`. |
 | `STORAGE_DIR` | `.data` | Mappe for lokal lagring. |
 | `PREVIEW_STRICT_SANDBOX` | `true` | CSP-sandbox på serverte preview-filer. |
-| `ANTHROPIC_API_KEY` | tom | Slår på support-chatten. `mock` = fast testsvar. |
-| `SUPPORT_MODEL` | `claude-sonnet-5` | Modellen chatten bruker. |
+| `CLOUDFLARE_ACCOUNT_ID` · `CLOUDFLARE_AI_TOKEN` | tom | Support-chat via Workers AI (gratis kvote). |
+| `SUPPORT_BASE_URL` · `SUPPORT_API_KEY` | tom | Support-chat via OpenAI-kompatibelt endepunkt. |
+| `ANTHROPIC_API_KEY` | tom | Support-chat via Claude. `mock` = fast testsvar. |
+| `SUPPORT_MODEL` · `SUPPORT_PROVIDER` | auto | Modell og tvungen leverandør for chatten. |
 
 ## Deploy
 
