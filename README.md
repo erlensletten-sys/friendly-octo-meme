@@ -3,8 +3,9 @@
 Hjemmesiden til gesjeften, og verktøyet som hører til. Ett Next.js-prosjekt med
 to halvdeler:
 
-- **Hjemmesiden** (`/`) — offentlig. En kinematisk åpning i 3D, en sløyfe som
-  aldri tar slutt, og seksjoner for tjenester, arbeid, prosess og kontakt.
+- **Hjemmesiden** (`/` på norsk, `/en` på engelsk) — offentlig. En kinematisk
+  åpning i 3D, en sløyfe som aldri tar slutt, og seksjoner for tjenester,
+  AI-agenter til leie, arbeid, prosess og kontakt.
 - **Visningsrom** (`/visningsrom`) — bak passord. Der nettsideforslag legges,
   sammenlignes side ved side og deles med kunden gjennom en hemmelig lenke.
 
@@ -46,19 +47,30 @@ skriver UI-kode her.
 
 | Fil | Hva den gjør |
 | --- | --- |
-| `src/lib/site/content.ts` | **All tekst på siden.** Navn, kontaktopplysninger, tjenester, prosjekter, prosess, meny og linjene i åpningssekvensen. Endre her, ikke i komponentene. |
+| `src/lib/site/content/nb.ts` · `en.ts` | **All tekst på siden, på hvert sitt språk.** Tjenester, agenter, prosjekter, prosess, meny, skjema og linjene i åpningen. `types.ts` er formen begge må fylle – mangler et felt i den ene, stopper typesjekken. `shared.ts` har det som er likt (kontaktopplysninger, lenker, status, skisser). Endre her, ikke i komponentene. |
+| `src/components/site/HomePage.tsx` | Hele forsida, samme for begge språk. `SiteContext.tsx` gir komponentene innholdet (`useSite()`). |
+| `src/components/site/LanguageGate.tsx` | Språkvalget ved første besøk. Forhåndsvalgt fra nettleserspråket, huskes i cookien `iwc_lang`, holder åpningen tilbake til valget er gjort. Vises aldri igjen; bytte skjer i menyen. |
+| `src/components/site/Agents.tsx` | AI-agenter til leie. Hvert kort er en terminal som «haler» loggen til én agent, linje for linje når kortet rulles inn. Loggene er eksempler og merket som det. |
 | `src/app/globals.css` | Fargeskalaene (`ink-*`, `mist-*`) og de to endene av sløyfa (`--color-loop-a`, `--color-loop-b`). Alt som lyser bruker disse to. |
-| `src/components/site/IntroGate.tsx` | Laster åpningen bare i nettleseren, slik at three.js og bloom aldri havner i hoved-bunten eller i server-renderingen. Viser en blinkende markør til den er lastet, så de første sekundene aldri er svarte. Et lite skript i `layout.tsx` (fra `src/lib/site/intro.ts`) skjuler markøren for den som alt har sett åpningen. |
+| `src/components/site/IntroGate.tsx` | Laster åpningen bare i nettleseren, slik at three.js og bloom aldri havner i hoved-bunten eller i server-renderingen. Viser en blinkende markør til den er lastet, så de første sekundene aldri er svarte. Et lite skript i `RootShell.tsx` (fra `src/lib/site/intro.ts`) skjuler markøren for den som alt har sett åpningen. |
 | `src/components/site/CinematicIntro.tsx` | **Åpningen.** Et mørkt rom, en skikkelse med hetta mot oss, og en skjerm som lyser opp ryggen hans. Kameraet kjører over skulderen, forbi hetta og inn i skjermen på 6,4 sekunder – klokka starter først når scenen har tegnet sitt første bilde. Terminalen skriver, lister opp, rydder skjermen og lar navnet stå alene; det er det kameraet stuper inn i. Kjører én gang per fane (`sessionStorage`-nøkkel `iwc:intro`), hoppes over med tast, klikk eller scroll, og vises ikke i det hele tatt ved «reduser bevegelse» eller uten WebGL. |
 | `src/components/site/ScreenTexture.ts` | Terminalen inne i åpningen. Tegnes på et 2D-lerret og legges som tekstur på skjermflaten, så den ligger i selve 3D-scenen — hetta kan skygge for den, og bloom får den til å lyse. |
 | `src/components/site/InfinityScene.tsx` | 3D-sløyfa i heroen. Et rør langs en lemniskat med to lyspulser som løper hver sin vei og aldri når slutten. Vipper mot musepekeren, slutter å tegne når den er utenfor skjermen, og faller tilbake til en SVG-sløyfe uten WebGL. |
 | `src/components/site/Hero.tsx` | Førsteinntrykket: prompt, overskrift, roterende skrivemaskin-linje, og parallakse mellom sløyfa og teksten. |
 | `src/components/site/Services.tsx` · `Work.tsx` · `Process.tsx` · `Contact.tsx` | Seksjonene. `Process` tegner tidslinja i takt med scrollen; `Contact` er skjemaet. |
 | `src/components/site/SiteNav.tsx` · `SiteFooter.tsx` | Toppmeny med mobilmeny og hopp-lenke, og bunnlinja. |
-| `src/components/site/Wireframe.tsx` | Skissene i arbeid-seksjonen — strukturen på hver side, tegnet i stedet for et skjermbilde. Radene settes per prosjekt i `content.ts`. |
+| `src/components/site/Wireframe.tsx` | Skissene i arbeid-seksjonen — strukturen på hver side, tegnet i stedet for et skjermbilde. Radene settes per prosjekt i `content/shared.ts`. |
 | `src/components/site/Terminal.tsx` · `StreamText.tsx` | Tekst som skrives ut: skrivemaskin-hooks og terminalramma rundt kortene, og tekst som strømmer inn ord for ord. |
 | `src/components/site/Tilt.tsx` · `Cursor.tsx` · `SmoothScroll.tsx` | Bevegelseslaget: kort som vipper i 3D mot musa, ringen som følger pekeren, og myk scrolling med Lenis. |
 | `src/components/site/SectionHead.tsx` | Kommandolinje, overskrift og ingress øverst i hver seksjon. |
+
+**To språk, to adresser.** Norsk bor på `/`, engelsk på `/en`, med `hreflang`
+begge veier. Fordi `<html lang>` bare kan settes av en rot-layout, er appen delt
+i to route-grupper: `app/(no)/` (norsk forside *og* hele verktøydelen) og
+`app/(en)/en/` (engelsk forside). Begge bruker `RootShell.tsx`. Å bytte språk er
+en full sidelast, og bryteren i menyen skriver cookien før den navigerer.
+`src/proxy.ts` sender den som har valgt engelsk fra `/` til `/en` – bare fra
+rota, så en delt lenke alltid åpner på språket den peker til.
 
 **Bevegelse er et lag, ikke en forutsetning.** Alt over sjekker
 `prefers-reduced-motion`: åpningen hoppes over, Lenis skrus av, ringen rundt
@@ -66,9 +78,11 @@ pekeren vises ikke, kortene slutter å vippe og sløyfa står stille. Vipp og ri
 krever dessuten fin peker, så på berøring er kortene vanlige kort. Uten WebGL
 byttes begge 3D-scenene ut med flate alternativ.
 
-**Før lansering:** fyll inn `phone` og `orgNumber` i `src/lib/site/content.ts`,
-og bytt `email` hvis henvendelser skal et annet sted. Feltene er merket TODO.
-Telefon vises bare i kontaktseksjonen når den er satt, og org.nr bare i bunnlinja.
+**Før lansering:** fyll inn `phone` og `orgNumber` i
+`src/lib/site/content/shared.ts`, bytt `email` hvis henvendelser skal et annet
+sted, og sett `agents.price` i både `nb.ts` og `en.ts`. Feltene er merket TODO.
+Telefon vises bare i kontaktseksjonen når den er satt, org.nr bare i bunnlinja,
+og prislinja bare når prisen er satt.
 
 Kontaktskjemaet setter sammen en e-post og åpner den i besøkendes eget
 e-postprogram. Ingen skjematjeneste, ingen database, ingen sporingscookies.
@@ -237,19 +251,22 @@ som et volum i Docker.
 ```
 src/
   app/
-    page.tsx                     hjemmesiden
-    layout.tsx · globals.css     fonter, metadata og fargeskalaene
-    login/                       innlogging til admin-delen
-    visningsrom/                 galleri, enkeltvisning, sammenligning, delte lenker
-    s/[token]/page.tsx           kundemodus
-    serve/[id]/[[...path]]/      sandboxet servering av opplastede filer
-    cryptopay/                   stand-in-API for CryptoPay-demoen
-    api/previews/                multipart-opplasting, client-token, finalize
-    api/                         deling, kommentarer, innlogging
-  components/site/               hjemmesiden - åpning, hero, seksjoner, bevegelse
+    globals.css                  fargeskalaene og utilities
+    (no)/                        norsk rot-layout (lang="nb")
+      page.tsx                   hjemmesiden på norsk
+      login/                     innlogging til admin-delen
+      visningsrom/               galleri, enkeltvisning, sammenligning, delte lenker
+      s/[token]/page.tsx         kundemodus
+      serve/[id]/[[...path]]/    sandboxet servering av opplastede filer
+      cryptopay/                 stand-in-API for CryptoPay-demoen
+      api/previews/              multipart-opplasting, client-token, finalize
+      api/                       deling, kommentarer, innlogging
+    (en)/en/                     engelsk rot-layout (lang="en") og hjemmesiden på engelsk
+  components/site/               hjemmesiden - åpning, språkvalg, hero, seksjoner, bevegelse
   components/                    Visningsrom
   lib/
-    site/content.ts              all tekst på hjemmesiden
+    site/content/                nb.ts, en.ts, shared.ts, types.ts - all tekst på hjemmesiden
+    site/lang.ts                 språkcookien
     storage/                     fs- og blob-driver bak ett grensesnitt
     store.ts                     previews, delinger og kommentarer
     uploads.ts                   felles opprettelse av previews (begge veier inn)

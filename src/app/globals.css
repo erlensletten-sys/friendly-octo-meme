@@ -185,6 +185,12 @@ html[data-intro="seen"] .intro-placeholder {
   display: none;
 }
 
+/* Språkvalget ved ankomst. Borte for den som alt har valgt (cookie, lest av
+   skriptet i <head>) - før React i det hele tatt er i gang. */
+html[data-lang="chosen"] .lang-gate {
+  display: none;
+}
+
 /* Tastaturfokus skal synes på mørk bunn. Bare ved :focus-visible, så mus
    og berøring ikke får ringer. */
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {

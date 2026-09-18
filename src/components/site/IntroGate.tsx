@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useIntroHold } from "./LanguageGate";
 
 /**
  * Det som vises fra første bilde til three.js er lastet: samme mørke flate som
@@ -27,5 +28,6 @@ const CinematicIntro = dynamic(() => import("./CinematicIntro"), {
 });
 
 export default function IntroGate() {
-  return <CinematicIntro />;
+  const hold = useIntroHold();
+  return <CinematicIntro hold={hold} />;
 }

@@ -16,11 +16,18 @@ forklarer hvordan det skal bygges videre.
   i miljøvariablene hos Vercel — aldri i en commit. `.env.example` viser bare
   navnene.
 - Endrer du noe README-en beskriver, oppdater README-en i samme commit.
+- **Ny tekst på hjemmesiden skrives på begge språk i samme commit.** Legg feltet
+  i `types.ts` først; da nekter typesjekken å gå gjennom før `nb.ts` og `en.ts`
+  begge har det. Engelsken skal ha samme stemme som norsken – konkret, uten
+  reklamespråk – ikke være en ordrett oversettelse.
+- Norsk bor på `/`, engelsk på `/en`. Verktøydelen (Visningsrom, API, demoer)
+  er norsk og ligger i `app/(no)/`. Nye offentlige sider som skal finnes på
+  begge språk, får en fil i hver route-gruppe som kaller samme komponent.
 
 | Sannhetskilde | Hva den eier |
 | --- | --- |
 | `src/app/globals.css` | Fargetokens, radier, fonter og alle egendefinerte utilities (`panel`, `field`, `mono`, `edge-glow`, `scanlines`, `loop-text`, `caret`, `grain`). |
-| `src/lib/site/content.ts` | All tekst på hjemmesiden. Ingen synlig streng skal skrives i en komponent. |
+| `src/lib/site/content/` | All tekst på hjemmesiden: `nb.ts` og `en.ts` fyller samme `Content`-form fra `types.ts`; `shared.ts` har det som er likt. Ingen synlig streng skal skrives i en komponent – komponentene henter alt via `useSite()`. |
 | `src/components/ui.tsx` | Knappeklasser og primitiver for Visningsrom (`btnPrimary`, `Panel`, `PageHeader`, `EmptyState`). |
 | `src/components/site/Terminal.tsx` | `TerminalChrome` — vindusramma som går igjen over hele hjemmesiden. |
 | `src/components/site/SectionHead.tsx` | Kommandolinje + overskrift + ingress øverst i hver seksjon. |
@@ -64,7 +71,7 @@ Regler:
 
 ## 2. Typografi
 
-- To fonter, begge fra `next/font/google` i `layout.tsx`: **Inter** (`--font-sans`)
+- To fonter, begge fra `next/font/google` i `RootShell.tsx`: **Inter** (`--font-sans`)
   til brødtekst, **JetBrains Mono** (`--font-mono`) til alt som skal lese seg som
   terminal.
 - Monospace settes med utility-en `mono`, ikke med `font-mono` direkte — `mono`
@@ -154,8 +161,8 @@ Bevegelse er et lag oppå, aldri en forutsetning for å forstå sida.
 - Kommentarer i koden er norske og forklarer *hvorfor*, ikke *hva*.
 - Ingen emoji i grensesnittet. Piler (`→`, `↓`) og `∞` er de eneste tegnene som
   brukes dekorativt.
-- Ny tekst på hjemmesiden legges i `content.ts` og hentes derfra — også når det
-  bare er ett ord.
+- Ny tekst på hjemmesiden legges i `content/nb.ts` **og** `content/en.ts` og
+  hentes via `useSite()` — også når det bare er ett ord.
 
 ## 8. Dette gjør vi ikke
 
