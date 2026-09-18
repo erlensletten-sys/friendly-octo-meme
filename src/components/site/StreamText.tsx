@@ -5,7 +5,8 @@ import { useState } from "react";
 
 /**
  * Teksten kommer ord for ord, som når en chatbot svarer - men mykt: hvert ord
- * glir opp fra en lett uskarphet i stedet for å hakke inn tegn for tegn.
+ * toner inn og glir opp i stedet for å hakke inn tegn for tegn. Bare opacity
+ * og transform: en blur per ord malte hele avsnittet på nytt i hvert bilde.
  * Markøren i enden blinker til siste ord er på plass, og forsvinner så.
  */
 export default function StreamText({
@@ -35,11 +36,10 @@ export default function StreamText({
   };
 
   const word: Variants = {
-    hidden: { opacity: 0, y: reduced ? 0 : 6, filter: reduced ? "blur(0px)" : "blur(5px)" },
+    hidden: { opacity: 0, y: reduced ? 0 : 6 },
     visible: {
       opacity: 1,
       y: 0,
-      filter: "blur(0px)",
       transition: { duration: reduced ? 0 : 0.42, ease: [0.22, 1, 0.36, 1] },
     },
   };
@@ -60,7 +60,7 @@ export default function StreamText({
         <motion.span
           key={`${item}-${index}`}
           variants={word}
-          className="inline-block will-change-[opacity,transform,filter]"
+          className="inline-block"
           aria-hidden
         >
           {item}

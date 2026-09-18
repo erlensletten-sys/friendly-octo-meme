@@ -16,7 +16,10 @@ export default function Process() {
     offset: ["start 70%", "end 60%"],
   });
   const drawn = useSpring(scrollYProgress, { stiffness: 120, damping: 28, mass: 0.4 });
-  const glowTop = useTransform(drawn, (value) => `${value * 100}%`);
+  // Lyspunktet flyttes med transform, ikke med `top`: top regner ut layout på
+  // nytt for hvert scrollbilde. Prosent i translateY er av elementets egen
+  // høyde, så punktet sitter i en ramme som er like høy som sporet.
+  const glowY = useTransform(drawn, (value) => `${value * 100}%`);
 
   return (
     <section
@@ -43,10 +46,13 @@ export default function Process() {
           style={{ scaleY: drawn, originY: 0 }}
           className="absolute top-2 bottom-2 left-[13px] w-px bg-gradient-to-b from-[color:var(--color-loop-a)] to-[color:var(--color-loop-b)] sm:left-[29px]"
         />
-        <motion.span
-          style={{ top: glowTop }}
-          className="absolute left-[9px] h-2 w-2 rounded-full bg-[color:var(--color-loop-a)] shadow-[0_0_14px_4px_rgba(62,240,220,0.45)] sm:left-[25px]"
-        />
+        <motion.div
+          aria-hidden
+          style={{ y: glowY }}
+          className="pointer-events-none absolute inset-y-0 left-[9px] w-2 sm:left-[25px]"
+        >
+          <span className="absolute top-0 left-0 h-2 w-2 rounded-full bg-[color:var(--color-loop-a)] shadow-[0_0_14px_4px_rgba(62,240,220,0.45)]" />
+        </motion.div>
 
         <ol className="space-y-12" style={{ perspective: 1100 }}>
           {process.map((step) => (

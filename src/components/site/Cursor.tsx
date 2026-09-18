@@ -35,17 +35,16 @@ export default function Cursor() {
 
   if (!enabled) return null;
 
+  // Ringen tegnes én gang i full størrelse og skaleres ned. Bredde, høyde og
+  // kantbredde ville tvunget layout og maling på hvert bilde; scale og
+  // opacity går rett på kompositoren.
   return (
     <motion.div
       aria-hidden
-      className="pointer-events-none fixed top-0 left-0 z-[90] rounded-full border border-[color:var(--color-loop-a)] mix-blend-difference"
+      className="pointer-events-none fixed top-0 left-0 z-[90] h-11 w-11 rounded-full border-2 border-[color:var(--color-loop-a)] mix-blend-difference"
       style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%" }}
-      animate={{
-        width: active ? 44 : 22,
-        height: active ? 44 : 22,
-        opacity: active ? 0.9 : 0.55,
-        borderWidth: active ? 1.5 : 1,
-      }}
+      initial={{ scale: 0.5, opacity: 0.55 }}
+      animate={{ scale: active ? 1 : 0.5, opacity: active ? 0.9 : 0.55 }}
       transition={{ type: "spring", stiffness: 300, damping: 24 }}
     />
   );

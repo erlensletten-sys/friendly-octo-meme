@@ -64,7 +64,10 @@ function Rig({
       start.current = performance.now();
       onFirstFrame();
     }
-    const t = THREE.MathUtils.clamp(easeCamera(progress.current), 0, 1);
+    // Klemmes før kurven: rAF-klokka kan ligge noen ms bak performance.now()
+    // i det første bildet, og et negativt tall opphøyd i 2,6 blir NaN - som
+    // får kurveoppslaget til å krasje.
+    const t = easeCamera(THREE.MathUtils.clamp(progress.current, 0, 1));
     PATH.getPointAt(t, pos);
     camera.position.copy(pos);
     // Blikket glir fra figuren over på skjermen.
@@ -357,6 +360,13 @@ export default function CinematicIntro() {
             dpr={[1, 1.5]}
             shadows="percentage"
             gl={{ antialias: false, powerPreference: "high-performance" }}
+            // Lys og møbler står stille - det er bare kameraet som beveger seg,
+            // og skygger avhenger ikke av kameraet. Punktlyset ville ellers
+            // tegnet seks skyggekart i hvert eneste bilde.
+            onCreated={({ gl }) => {
+              gl.shadowMap.autoUpdate = false;
+              gl.shadowMap.needsUpdate = true;
+            }}
           >
             <color attach="background" args={["#05070a"]} />
             <Scene progress={progress} start={start} screen={screen} onFirstFrame={onFirstFrame} />
