@@ -24,19 +24,19 @@ export const projectShared: Record<
     stack: ["Next.js", "Three.js", "Payload CMS"],
     wireframe: ["nav", "hero", "grid", "band", "foot"],
     href: "https://stenumgaarddesign.no",
-    // stenumgaarddesign.no svarer med X-Frame-Options: SAMEORIGIN, så den kan
-    // ikke vises i ramme herfra ennå. Sett framable: true når sida sender
-    // Content-Security-Policy: frame-ancestors 'self' https://infinitywebcreations.no
-    preview: { src: "https://stenumgaarddesign.no", framable: false },
+    // stenumgaarddesign.no svarer med X-Frame-Options: SAMEORIGIN og kan ikke
+    // vises i ramme direkte. I stedet ligger en kopi av sidas filer i
+    // Visningsrom som utstillingen «utstilling» (scripts/utstilling.mjs), og
+    // /vis/utstilling sender videre til den. Samme origin, ingen sperre.
+    preview: { src: "/vis/utstilling", framable: true },
     status: "live",
   },
   visningsrom: {
     stack: ["Next.js", "Vercel Blob", "Sandkasse-iframes"],
     wireframe: ["nav", "band", "grid", "split", "foot"],
     href: "/visningsrom",
-    // Bak passord i produksjon, så ramma viser innloggingen. Pek den heller
-    // på en kundelenke (/s/<token>) når det finnes en du vil vise fram.
-    preview: { src: "/visningsrom", framable: true },
+    // Kundelenka til utstillingen - åpen uten passord, slik kundene ser den.
+    preview: { src: "/s/utstilling", framable: true },
     status: "live",
   },
   cryptopay: {

@@ -64,7 +64,9 @@ export async function readPreviewFile(id: string, path: string): Promise<Uint8Ar
 const shareKey = (token: string) => `shares/${encodeURIComponent(token)}.json`;
 
 export async function getShare(token: string): Promise<Share | null> {
-  if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return null;
+  // Hemmelige tokens er 32 tegn; valgte slugs (offentlige utstillinger) kan
+  // være ned til 6. Alt under det, eller med andre tegn, er ikke en deling.
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(token)) return null;
   return readJson<Share>(shareKey(token));
 }
 

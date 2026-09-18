@@ -73,13 +73,14 @@ en full sidelast, og bryteren i menyen skriver cookien før den navigerer.
 `src/proxy.ts` sender den som har valgt engelsk fra `/` til `/en` – bare fra
 rota, så en delt lenke alltid åpner på språket den peker til.
 
-**Rammene i arbeid-seksjonen** viser sidene som de er. Det krever at sida
-tillater å bli satt i ramme fra dette domenet: `stenumgaarddesign.no` sender i
-dag `X-Frame-Options: SAMEORIGIN` og står derfor med skisse (`framable: false`).
-Når den sender `Content-Security-Policy: frame-ancestors 'self'
-https://infinitywebcreations.no` i stedet, er det bare å sette `framable: true`.
-Visningsrom ligger bak passord, så ramma viser innloggingen; pek `preview.src`
-på en kundelenke (`/s/<token>`) for å vise ekte forslag.
+**Rammene i arbeid-seksjonen** viser sidene som de er. CryptoPay er
+`/cryptopay` rett fram. De to andre går gjennom *utstillingen*: en deling i
+Visningsrom med den faste sluggen `utstilling`, som inneholder en kopi av
+Stenumgaard-sidas filer. `stenumgaarddesign.no` sender `X-Frame-Options:
+SAMEORIGIN` og kan ikke settes i ramme direkte, men en kopi servert fra
+`/serve/` er samme origin. Stenumgaard-kortet peker på `/vis/utstilling`, som
+sender videre til den første pakken i delingen; Visningsrom-kortet peker på
+kundelenka `/s/utstilling`. Se **Utstillingen** under.
 
 **Bevegelse er et lag, ikke en forutsetning.** Alt over sjekker
 `prefers-reduced-motion`: åpningen hoppes over, Lenis skrus av, ringen rundt
@@ -107,10 +108,42 @@ e-postprogram. Ingen skjematjeneste, ingen database, ingen sporingscookies.
 | `/visningsrom/compare?ids=a,b` | To til fire paneler side ved side, felles enhetsbredde og synkronisert scrolling. |
 | `/visningsrom/shares` | Oversikt over delte lenker, med mulighet til å trekke dem tilbake. |
 | `/s/<token>` | Kundemodus. Ingen opplasting eller sletting – bare forslagene og et kommentarfelt. Åpen uten passord. |
+| `/vis/<slug>` | Sida selv i en deling med valgt slug – videresending til `/serve/<id>/`. Brukes av hjemmesiden. |
 
 Marker previews i galleriet med avkryssingsboksen øverst til venstre på kortet,
 og velg **Sammenlign side ved side** eller **Del med kunde** i linja som kommer
 opp nederst.
+
+### Utstillingen
+
+Arbeid-seksjonen på hjemmesiden henter det den viser fra en deling med slug
+`utstilling`. Den lages på serveren der både appen og nettsidefilene ligger:
+
+```bash
+node scripts/utstilling.mjs \
+  --dir /sti/til/stenumgaard/dist --title "Stenumgaard Design" \
+  --dir demo/forslag-b            --title "Forslag B" \
+  --slug utstilling [--app http://localhost:3000]
+```
+
+Skriptet zipper hver mappe, laster den opp gjennom `/api/previews`, sletter en
+eventuell gammel deling med samme slug, og lager en ny gjennom `/api/shares`.
+Passordet leses fra `ADMIN_PASSWORD` i miljøet eller `.env.local`. Kjør det på
+nytt for å bytte innhold – hjemmesiden trenger ingen kodeendring, fordi den
+peker på sluggen, ikke på preview-id-er:
+
+| Adresse | Hva |
+| --- | --- |
+| `/s/utstilling` | Kundelenka: alle pakkene i delingen, slik en kunde ser dem. Åpen. |
+| `/vis/utstilling` | Sida selv: sender videre til `/serve/<id>/` for første pakke. `?n=1` for neste. |
+
+Slugs er et bevisst unntak fra hemmelige tokens: `POST /api/shares` godtar
+`slug` (6–40 tegn, små bokstaver, tall, bindestrek) og svarer 409 hvis den er
+i bruk. En deling med slug er offentlig – det er hele poenget med den.
+
+Én ting å vite om kopien: filene serveres fra `/serve/<id>/`, så sida må bruke
+relative stier. En Vite-build med `base: './'` eller en Next-eksport med
+`assetPrefix: './'` fungerer; absolutte stier som `/assets/x.js` peker feil.
 
 ### To veier inn for filer
 
@@ -267,6 +300,7 @@ src/
       visningsrom/               galleri, enkeltvisning, sammenligning, delte lenker
       s/[token]/page.tsx         kundemodus
       serve/[id]/[[...path]]/    sandboxet servering av opplastede filer
+      vis/[slug]/                utstillingen: slug → /serve/<id>/
       cryptopay/                 stand-in-API for CryptoPay-demoen
       api/previews/              multipart-opplasting, client-token, finalize
       api/                       deling, kommentarer, innlogging
@@ -285,6 +319,7 @@ src/
     cryptopayDemo.ts             tilstand og regler for CryptoPay-demoen
   proxy.ts                       passordsjekken
 public/cryptopay/                CryptoPay-sidene, kopiert fra produktet
+scripts/utstilling.mjs           legger en mappe inn i Visningsrom som utstillingen
 ```
 
 Metadata lagres som én JSON-fil per objekt (`previews/<id>/meta.json`,
