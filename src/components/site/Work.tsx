@@ -5,27 +5,26 @@ import { motion } from "motion/react";
 import SectionHead from "./SectionHead";
 import { TerminalChrome } from "./Terminal";
 import Tilt from "./Tilt";
+import SitePreview from "./SitePreview";
 import Wireframe from "./Wireframe";
-import { projects } from "@/lib/site/content";
+import type { ProjectStatus } from "@/lib/site/content";
+import { useSite } from "./SiteContext";
 
-const statusStyle: Record<string, string> = {
-  "i produksjon": "border-emerald-500/40 text-emerald-300",
-  "under arbeid": "border-amber-brand/40 text-[color:var(--color-amber-brand)]",
-  levert: "border-ink-600 text-mist-400",
+const statusStyle: Record<ProjectStatus, string> = {
+  live: "border-emerald-500/40 text-emerald-300",
+  wip: "border-amber-brand/40 text-[color:var(--color-amber-brand)]",
+  delivered: "border-ink-600 text-mist-400",
 };
 
 export default function Work() {
+  const { t } = useSite();
   return (
     <section id="arbeid" className="scroll-mt-24 border-y border-ink-800/80 bg-ink-900/40">
       <div className="mx-auto max-w-[1180px] px-5 py-24 md:py-32">
-        <SectionHead
-          command="git log --oneline arbeid/"
-          title="Det jeg har bygget"
-          lead="Mest bygg og anlegg i Gudbrandsdalen, pluss verktøyene jeg lager for å gjøre den jobben bedre. Skissene viser hvordan sidene er satt sammen."
-        />
+        <SectionHead command={t.work.command} title={t.work.title} lead={t.work.lead} />
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project, index) => (
+          {t.work.items.map((project, index) => (
             <motion.article
               key={project.id}
               initial={{ opacity: 0, y: 26 }}
@@ -37,7 +36,23 @@ export default function Work() {
               <Tilt className="h-full" max={5}>
               <TerminalChrome title={project.href ?? project.id} className="h-full">
                 <div className="flex flex-1 flex-col gap-4 bg-ink-850/70 p-5">
-                  <Wireframe rows={project.wireframe} />
+                  {project.preview?.framable ? (
+                    project.href ? (
+                      <a
+                        href={project.href}
+                        target={project.href.startsWith("/") ? undefined : "_blank"}
+                        rel={project.href.startsWith("/") ? undefined : "noreferrer"}
+                        aria-label={`${t.ui.open} ${project.name}`}
+                        className="block rounded-lg transition-transform hover:scale-[1.015]"
+                      >
+                        <SitePreview src={project.preview.src} title={project.name} />
+                      </a>
+                    ) : (
+                      <SitePreview src={project.preview.src} title={project.name} />
+                    )
+                  ) : (
+                    <Wireframe rows={project.wireframe} />
+                  )}
 
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -49,11 +64,9 @@ export default function Work() {
                       </p>
                     </div>
                     <span
-                      className={`mono shrink-0 rounded-md border px-2 py-1 text-[10px] ${
-                        statusStyle[project.status] ?? statusStyle.levert
-                      }`}
+                      className={`mono shrink-0 rounded-md border px-2 py-1 text-[10px] ${statusStyle[project.status]}`}
                     >
-                      {project.status}
+                      {t.work.status[project.status]}
                     </span>
                   </div>
 
@@ -74,7 +87,7 @@ export default function Work() {
                           href={project.href}
                           className="ml-auto text-[11px] text-[color:var(--color-loop-a)] hover:underline"
                         >
-                          åpne →
+                          {t.ui.open}
                         </Link>
                       ) : (
                         <a
@@ -83,7 +96,7 @@ export default function Work() {
                           rel="noreferrer"
                           className="ml-auto text-[11px] text-[color:var(--color-loop-a)] hover:underline"
                         >
-                          åpne →
+                          {t.ui.open}
                         </a>
                       )
                     )}

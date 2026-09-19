@@ -5,9 +5,10 @@ import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { bootLines } from "@/lib/site/content";
+import type { BootLine } from "@/lib/site/content/types";
 import { INTRO_SESSION_KEY } from "@/lib/site/intro";
-import { BOOT_COMMAND_LENGTH, ScreenTexture } from "./ScreenTexture";
+import { ScreenTexture } from "./ScreenTexture";
+import { useSite } from "./SiteContext";
 
 const DURATION = 6.4; // sekunder fra første bilde til sida er framme
 
@@ -233,17 +234,19 @@ function Scene({
   progress,
   start,
   screen,
+  bootLines,
   onFirstFrame,
 }: {
   progress: React.MutableRefObject<number>;
   start: React.MutableRefObject<number | null>;
   screen: ScreenTexture;
+  bootLines: BootLine[];
   onFirstFrame: () => void;
 }) {
   // Terminalen skriver seg mens kameraet kjører inn.
   useFrame((state) => {
     const elapsed = progress.current * DURATION;
-    const typed = Math.min(BOOT_COMMAND_LENGTH, Math.floor(Math.max(0, elapsed - 0.5) / 0.045));
+    const typed = Math.min(screen.commandLength, Math.floor(Math.max(0, elapsed - 0.5) / 0.045));
     // Én linje mer enn det finnes, og skjermen ryddes for navnet alene -
     // det er det kameraet stuper inn i.
     const lines = Math.min(bootLines.length + 1, Math.floor(Math.max(0, elapsed - 1.9) / 0.28));
@@ -280,7 +283,8 @@ function supportsWebGL(): boolean {
  * lyser opp ryggen hans. Kameraet kjører over skulderen og inn i skjermen -
  * og det som står på skjermen er sida du er på vei inn på.
  */
-export default function CinematicIntro() {
+export default function CinematicIntro({ hold = false }: { hold?: boolean }) {
+  const { t } = useSite();
   const reduced = useReducedMotion();
   const [state, setState] = useState<"ukjent" | "kjører" | "ferdig">("ukjent");
   const [fading, setFading] = useState(false);
@@ -288,9 +292,14 @@ export default function CinematicIntro() {
   const onFirstFrame = useCallback(() => setDrawn(true), []);
   const progress = useRef(0);
   const start = useRef<number | null>(null);
-  const screen = useMemo(() => (typeof document !== "undefined" ? new ScreenTexture() : null), []);
+  const screen = useMemo(
+    () => (typeof document !== "undefined" ? new ScreenTexture(t.brand, t.bootLines) : null),
+    [t],
+  );
 
   useEffect(() => {
+    // Språkvalget vises først. Til det er gjort, gjør vi ingenting.
+    if (hold) return;
     let seen = false;
     try {
       seen = sessionStorage.getItem(INTRO_SESSION_KEY) === "1";
@@ -298,7 +307,7 @@ export default function CinematicIntro() {
       /* privat modus */
     }
     setState(seen || reduced || !supportsWebGL() ? "ferdig" : "kjører");
-  }, [reduced]);
+  }, [reduced, hold]);
 
   const finish = useCallback(() => {
     setFading(true);
@@ -369,7 +378,7 @@ export default function CinematicIntro() {
             }}
           >
             <color attach="background" args={["#05070a"]} />
-            <Scene progress={progress} start={start} screen={screen} onFirstFrame={onFirstFrame} />
+            <Scene progress={progress} start={start} screen={screen} bootLines={t.bootLines} onFirstFrame={onFirstFrame} />
           </Canvas>
 
           {/* Samme markør som plassholderen viste, til scenen har tegnet sitt
@@ -394,7 +403,7 @@ export default function CinematicIntro() {
           />
 
           <p className="mono absolute inset-x-0 bottom-6 text-center text-[11px] text-mist-400">
-            trykk hvor som helst for å hoppe over
+            {t.intro.skip}
           </p>
         </motion.div>
       )}

@@ -4,19 +4,16 @@ import { motion } from "motion/react";
 import SectionHead from "./SectionHead";
 import { TerminalChrome } from "./Terminal";
 import Tilt from "./Tilt";
-import { services } from "@/lib/site/content";
+import { useSite } from "./SiteContext";
 
 export default function Services() {
+  const { t } = useSite();
   return (
     <section id="tjenester" className="mx-auto max-w-[1180px] scroll-mt-24 px-5 py-24 md:py-32">
-      <SectionHead
-        command="ls tjenester/"
-        title="Fire ting jeg gjør, og gjør ordentlig"
-        lead="Jeg tar heller fire oppdrag i året som blir riktige enn tjue som blir omtrent. Under ligger det jeg faktisk leverer."
-      />
+      <SectionHead command={t.services.command} title={t.services.title} lead={t.services.lead} />
 
       <div className="mt-12 grid gap-5 md:grid-cols-2">
-        {services.map((service, index) => (
+        {t.services.items.map((service, index) => (
           <motion.div
             key={service.id}
             initial={{ opacity: 0, y: 26 }}

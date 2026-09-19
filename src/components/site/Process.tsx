@@ -4,9 +4,10 @@ import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "mo
 import { useRef } from "react";
 import SectionHead from "./SectionHead";
 import StreamText from "./StreamText";
-import { process } from "@/lib/site/content";
+import { useSite } from "./SiteContext";
 
 export default function Process() {
+  const { t } = useSite();
   const track = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
@@ -27,15 +28,10 @@ export default function Process() {
       className="mx-auto grid max-w-[1180px] scroll-mt-24 gap-x-16 gap-y-12 px-5 py-24 md:py-32 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]"
     >
       <div className="lg:sticky lg:top-28 lg:self-start">
-        <SectionHead
-          command="cat prosess.md"
-          title="Slik går et oppdrag"
-          lead="Ingen overraskelser underveis, og ingenting som spikres før du har sett det. Du eier alt som lages, hele veien."
-        />
+        <SectionHead command={t.process.command} title={t.process.title} lead={t.process.lead} />
         <p className="mono mt-8 hidden max-w-[34ch] rounded-lg border border-ink-700 bg-ink-900/60 p-4 text-[11.5px] leading-relaxed text-mist-400 lg:block">
           <span className="text-[color:var(--color-loop-a)]"># </span>
-          Et vanlig oppdrag tar fire til seks uker fra første samtale til
-          lansering. Haster det, sier jeg fra med én gang om det lar seg gjøre.
+          {t.process.note}
         </p>
       </div>
 
@@ -55,7 +51,7 @@ export default function Process() {
         </motion.div>
 
         <ol className="space-y-12" style={{ perspective: 1100 }}>
-          {process.map((step) => (
+          {t.process.steps.map((step) => (
             <motion.li
               key={step.n}
               // Hvert steg svinger inn fra dybden, som et kort som legges ned på

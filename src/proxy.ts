@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_COOKIE, authEnabled, safeEqual, sessionToken } from "@/lib/auth";
+import { LANG_COOKIE } from "@/lib/site/content";
 
 /**
  * Hjemmesiden er offentlig. Bare verktøydelen krever passord.
@@ -15,6 +16,7 @@ const PROTECTED_PREFIXES = [
   "/api/previews",
   "/api/shares",
   "/api/comments",
+  "/api/site-text",
 ];
 
 /**
@@ -33,6 +35,16 @@ export async function proxy(request: NextRequest) {
 
   if (pathname !== "/robots.txt" && BLOCKED_AGENTS.test(request.headers.get("user-agent") ?? "")) {
     return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  // Den som har valgt engelsk, og kommer til rota, skal rett til /en. Bare
+  // rota: en delt lenke til /en åpnes alltid på engelsk, og en som eksplisitt
+  // går til / etter å ha valgt norsk igjen, får norsk (bryteren i menyen
+  // skriver cookien om før den navigerer).
+  if (pathname === "/" && request.cookies.get(LANG_COOKIE)?.value === "en") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/en";
+    return NextResponse.redirect(url, 307);
   }
 
   if (!authEnabled()) return NextResponse.next();

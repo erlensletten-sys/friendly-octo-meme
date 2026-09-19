@@ -1,12 +1,11 @@
 "use client";
 
 import * as THREE from "three";
-import { bootLines, brand } from "@/lib/site/content";
+import type { BootLine, Brand } from "@/lib/site/content/types";
 
 export const SCREEN_W = 960;
 export const SCREEN_H = 540;
 
-const COMMAND = `boot --system=${brand.name.toLowerCase().replace(/\s+/g, "-")}`;
 
 /**
  * Terminalen som vises på skjermen i introen tegnes på et 2D-lerret og brukes
@@ -18,8 +17,15 @@ export class ScreenTexture {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
   private lastKey = "";
+  private readonly command: string;
+  readonly commandLength: number;
 
-  constructor() {
+  constructor(
+    private readonly brand: Brand,
+    private readonly bootLines: BootLine[],
+  ) {
+    this.command = `boot --system=${brand.name.toLowerCase().replace(/\s+/g, "-")}`;
+    this.commandLength = this.command.length;
     this.canvas = document.createElement("canvas");
     this.canvas.width = SCREEN_W;
     this.canvas.height = SCREEN_H;
@@ -69,21 +75,21 @@ export class ScreenTexture {
     }
     c.fillStyle = "#7c8796";
     c.font = `500 15px ${mono}`;
-    c.fillText(`${brand.shell}@web: ~`, x + 84, y + 26);
+    c.fillText(`${this.brand.shell}@web: ~`, x + 84, y + 26);
 
     const blink = Math.floor(time * 2) % 2 === 0;
 
     // Siste fase: skjermen er ryddet, og navnet står alene midt i vinduet.
     // Det er dette kameraet stuper inn i, så det må tåle å fylle hele bildet.
-    if (lines > bootLines.length) {
+    if (lines > this.bootLines.length) {
       c.font = `600 38px ${mono}`;
-      const nameW = c.measureText(brand.name).width;
+      const nameW = c.measureText(this.brand.name).width;
       const nx = x + (w - nameW) / 2;
       const ny = y + 40 + (h - 40) / 2 + 14;
       c.fillStyle = "#8b5cf6";
       c.fillText(">", nx - 40, ny);
       c.fillStyle = "#e8ebf0";
-      c.fillText(brand.name, nx, ny);
+      c.fillText(this.brand.name, nx, ny);
       if (blink) {
         c.fillStyle = "#3ef0dc";
         c.fillRect(nx + nameW + 10, ny - 31, 18, 38);
@@ -100,17 +106,17 @@ export class ScreenTexture {
     c.fillStyle = "#3ef0dc";
     c.fillText("$", x + 28, cy);
     c.fillStyle = "#e8ebf0";
-    const typed = COMMAND.slice(0, typedChars);
+    const typed = this.command.slice(0, typedChars);
     c.fillText(typed, x + 52, cy);
-    if (typedChars < COMMAND.length && blink) {
+    if (typedChars < this.command.length && blink) {
       const tw = c.measureText(typed).width;
       c.fillStyle = "#3ef0dc";
       c.fillRect(x + 56 + tw, cy - 17, 11, 21);
     }
     cy += lineH + 6;
 
-    for (let i = 0; i < Math.min(lines, bootLines.length); i++) {
-      const line = bootLines[i];
+    for (let i = 0; i < Math.min(lines, this.bootLines.length); i++) {
+      const line = this.bootLines[i];
       c.fillStyle = "#3ef0dc";
       c.fillText("[ ok ]", x + 28, cy);
       c.fillStyle = "#9aa4b2";
@@ -120,15 +126,15 @@ export class ScreenTexture {
       cy += lineH;
     }
 
-    if (lines >= bootLines.length) {
+    if (lines >= this.bootLines.length) {
       cy += 8;
       c.fillStyle = "#8b5cf6";
       c.fillText(">", x + 28, cy);
       c.fillStyle = "#e8ebf0";
       c.font = `600 21px ${mono}`;
-      c.fillText(brand.name, x + 52, cy);
+      c.fillText(this.brand.name, x + 52, cy);
       if (blink) {
-        const tw = c.measureText(brand.name).width;
+        const tw = c.measureText(this.brand.name).width;
         c.fillStyle = "#3ef0dc";
         c.fillRect(x + 58 + tw, cy - 18, 11, 22);
       }
@@ -168,4 +174,3 @@ function getMonoFont(): string {
   }
 }
 
-export const BOOT_COMMAND_LENGTH = COMMAND.length;

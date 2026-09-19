@@ -3,15 +3,16 @@
 import dynamic from "next/dynamic";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useRotatingTypewriter } from "./Terminal";
-import { brand, heroRotation } from "@/lib/site/content";
+import { useSite } from "./SiteContext";
 
 // Three.js har ingenting på serveren å gjøre, og skal ikke ligge i
 // hoved-bunten heller - den lastes når forsiden er i gang.
 const InfinityScene = dynamic(() => import("./InfinityScene"), { ssr: false });
 
 export default function Hero() {
+  const { t } = useSite();
   const reduced = useReducedMotion();
-  const rotating = useRotatingTypewriter(heroRotation, !reduced);
+  const rotating = useRotatingTypewriter(t.heroRotation, !reduced);
 
   // Parallakse: sløyfa glir saktere enn teksten når du scroller, så det leser
   // seg som dybde og ikke som et flatt bilde som forsvinner oppover.
@@ -50,7 +51,7 @@ export default function Hero() {
           transition={{ delay: 0.38, duration: 0.5 }}
           className="mono mt-1.5 text-[12px] text-mist-300"
         >
-          Erlen Sletten — fullstack utvikler, {brand.location}
+          {t.hero.whoami}{t.brand.location}
         </motion.p>
 
         <motion.h1
@@ -59,9 +60,9 @@ export default function Hero() {
           transition={{ delay: 0.5, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="mt-7 max-w-[15ch] text-[clamp(2.4rem,6.6vw,4.7rem)] leading-[0.98] font-semibold tracking-[-0.035em]"
         >
-          Nettsider og verktøy{" "}
-          <span className="loop-text loop-text-animate whitespace-nowrap">som holder</span>{" "}
-          å drive bedrift med
+          {t.hero.title[0]}{" "}
+          <span className="loop-text loop-text-animate whitespace-nowrap">{t.hero.title[1]}</span>{" "}
+          {t.hero.title[2]}
         </motion.h1>
 
         <motion.div
@@ -71,7 +72,7 @@ export default function Hero() {
           className="mono mt-6 flex min-h-[1.6em] items-center text-[13px] text-mist-300"
         >
           <span className="mr-2 text-[color:var(--color-loop-b)]">&gt;</span>
-          <span>bygger {rotating}</span>
+          <span>{t.hero.buildsPrefix}{rotating}</span>
           <span className="caret" />
         </motion.div>
 
@@ -81,8 +82,7 @@ export default function Hero() {
           transition={{ delay: 0.85, duration: 0.6 }}
           className="mt-7 max-w-[56ch] text-[15px] leading-relaxed text-mist-300"
         >
-          Jeg bygger for små og mellomstore bedrifter, mest innen bygg og anlegg. Alt jeg leverer
-          skal kunne driftes videre uten meg — og forbedres videre med meg.
+          {t.hero.lead}
         </motion.p>
 
         <motion.div
@@ -95,20 +95,20 @@ export default function Hero() {
             href="#arbeid"
             className="mono flex min-h-12 items-center rounded-lg bg-[color:var(--color-loop-a)] px-5 text-[13px] font-semibold text-ink-950 transition-transform hover:scale-[1.03]"
           >
-            Se arbeidet
+            {t.hero.ctaWork}
           </a>
           <a
             href="#kontakt"
             className="mono flex min-h-12 items-center rounded-lg border border-ink-600 px-5 text-[13px] text-mist-200 transition-colors hover:border-[color:var(--color-loop-b)] hover:text-mist-100"
           >
-            Ta kontakt
+            {t.hero.ctaContact}
           </a>
           <span className="mono ml-1 flex items-center gap-2 text-[12px] text-mist-400">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
-            ledig for oppdrag
+            {t.hero.available}
           </span>
         </motion.div>
       </motion.div>
@@ -120,7 +120,7 @@ export default function Hero() {
         className="mono absolute inset-x-0 bottom-6 flex justify-center text-[11px] text-mist-400"
       >
         <span className="flex items-center gap-2">
-          scroll
+          {t.hero.scroll}
           <motion.span
             animate={{ y: [0, 5, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
